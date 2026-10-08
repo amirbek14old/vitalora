@@ -1,0 +1,29 @@
+import "server-only";
+import { db } from "@/lib/db";
+
+export type RateLimitResult = { ok: boolean; remaining: number; resetAt: Date };
+
+/**
+ * Fixed-window rate limiter persisted in Postgres (works across serverless instances).
+ * Uses a single atomic upsert statement.
+ */
+export async function rateLimit(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult> {
+  const rows = await db.$queryRaw<{ count: number; windowEnd: Date }[]>`
+    INSERT INTO "RateLimitBucket" ("key", "count", "windowEnd")
+    VALUES (${key}::text, 1, NOW() + (${windowSeconds}::int * INTERVAL '1 second'))
+    ON CONFLICT ("key") DO UPDATE SET
+      "count" = CASE WHEN "RateLimitBucket"."windowEnd" < NOW() THEN 1 ELSE "RateLimitBucket"."count" + 1 END,
+      "windowEnd" = CASE WHEN "RateLimitBucket"."windowEnd" < NOW() THEN NOW() + (${windowSeconds}::int * INTERVAL '1 second') ELSE "RateLimitBucket"."windowEnd" END
+    RETURNING "count"::int AS "count", "windowEnd"`;
+  const row = rows[0];
+  return { ok: row.count <= limit, remaining: Math.max(0, limit - row.count), resetAt: row.windowEnd };
+}
+
+export const LIMITS = {
+  login: { limit: 10, window: 15 * 60 },
+  register: { limit: 5, window: 60 * 60 },
+  aiChat: { limit: 30, window: 60 * 60 },
+  foodScan: { limit: 15, window: 60 * 60 },
+  post: { limit: 20, window: 60 * 60 },
+  report: { limit: 20, window: 60 * 60 },
+} as const;

@@ -1,0 +1,464 @@
+// VITALORA AI — database schema
+// Localised content uses Json fields shaped as { "uz": "...", "en": "...", "ru": "..." }.
+// Health-related tables (SleepLog, WorkoutSession, MealLog, HabitEntry) are owned by a user,
+// deleted with the user (onDelete: Cascade) and never exposed publicly.
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client" // Rust-free Prisma (GA since 6.16) — uses @prisma/adapter-pg, ideal for Vercel
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum AgeGroup {
+  TEEN // 13–17: privacy-protective defaults, no calorie numbers
+  ADULT
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum HabitCategory {
+  MOVEMENT
+  SLEEP
+  MEALS
+  LEARNING
+  BREAKS
+  HYDRATION
+  CUSTOM
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum PostStatus {
+  VISIBLE
+  PENDING
+  HIDDEN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+
+  profile          Profile?
+  preference       Preference?
+  sessions         Session[]
+  workoutSessions  WorkoutSession[]
+  sleepLogs        SleepLog[]
+  habits           Habit[]
+  mealLogs         MealLog[]
+  lessonProgress   LessonProgress[]
+  quizAttempts     QuizAttempt[]
+  achievements     UserAchievement[]
+  memberships      CommunityMember[]
+  posts            CommunityPost[]
+  reports          Report[]          @relation("Reporter")
+  aiConversations  AIConversation[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Profile {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName       String
+  birthYear         Int
+  ageGroup          AgeGroup
+  experienceLevel   Difficulty @default(BEGINNER)
+  goals             String[]   @default([])
+  minutesPerDay     Int        @default(20)
+  onboardingDone    Boolean    @default(false)
+  bio               String?    @db.VarChar(280)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+}
+
+model Preference {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locale                   String   @default("uz")
+  theme                    String   @default("system")
+  remindersEnabled         Boolean  @default(false)
+  reminderTime             String?  // "HH:MM"
+  // Consent controls — all default to off.
+  aiConsent                Boolean  @default(false) // may send messages/photos to AI provider
+  aiPersonalizationConsent Boolean  @default(false) // may include own habit summary in AI context
+  analyticsConsent         Boolean  @default(false)
+  communityVisible         Boolean  @default(false)
+  bedtimeRoutine           Json?    // [{ id, label, done }]
+  updatedAt                DateTime @updatedAt
+}
+
+model Exercise {
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  name         Json
+  description  Json
+  steps        Json       // { uz: string[], en: string[], ru: string[] }
+  safetyTips   Json
+  category     String     // strength | cardio | mobility | balance | warmup | cooldown
+  muscleGroups String[]
+  difficulty   Difficulty
+  equipment    String     @default("none")
+  durationSec  Int        @default(40)
+  videoUrl     String?
+  alternatives String[]   @default([]) // slugs
+  published    Boolean    @default(true)
+  reviewed     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  logs         WorkoutLog[]
+
+  @@index([category, difficulty])
+}
+
+model WorkoutSession {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String       @db.VarChar(120)
+  date        DateTime     @default(now())
+  durationMin Int
+  effort      Int          // 1–5 perceived effort (self-reported)
+  notes       String?      @db.VarChar(500)
+  createdAt   DateTime     @default(now())
+  logs        WorkoutLog[]
+
+  @@index([userId, date])
+}
+
+model WorkoutLog {
+  id          String         @id @default(cuid())
+  sessionId   String
+  session     WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  sets        Int?
+  reps        Int?
+  durationSec Int?
+
+  @@index([sessionId])
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       Json
+  description Json
+  ingredients Json     // { uz: string[], ... }
+  steps       Json
+  cuisine     String   // uzbek | international
+  region      String?
+  foodGroups  String[]
+  allergens   String[] @default([])
+  prepMin     Int
+  servings    Int
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([cuisine])
+}
+
+model NutritionLesson {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  topic     String   // food-groups | hydration | allergies | meal-prep | nutrients
+  title     Json
+  body      Json     // { uz: string[] paragraphs, ... }
+  sources   String[] @default([])
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model MealLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  source      String   // photo | manual
+  items       Json     // [{ name, portionGrams, kcal?, proteinG?, carbsG?, fatG?, foodGroup }]
+  totalKcal   Int?
+  balanceNote String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+model SleepLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date // the morning the user woke up
+  bedtime   String   // "HH:MM"
+  wakeTime  String   // "HH:MM"
+  minutes   Int
+  quality   Int      // 1–5 self-reported
+  notes     String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+}
+
+model Habit {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String        @db.VarChar(80)
+  category      HabitCategory
+  targetPerWeek Int           @default(5)
+  paused        Boolean       @default(false)
+  archived      Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  entries       HabitEntry[]
+
+  @@index([userId, archived])
+}
+
+model HabitEntry {
+  id      String   @id @default(cuid())
+  habitId String
+  habit   Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+
+  @@unique([habitId, date])
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       Json
+  description Json
+  track       String   // sports | nutrition | sleep | habits
+  level       Difficulty @default(BEGINNER)
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  lessons     Lesson[]
+}
+
+model Lesson {
+  id        String         @id @default(cuid())
+  courseId  String
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slug      String
+  title     Json
+  body      Json           // { uz: string[] paragraphs, ... }
+  videoUrl  String?
+  minutes   Int            @default(5)
+  order     Int
+  questions QuizQuestion[]
+  progress  LessonProgress[]
+
+  @@unique([courseId, slug])
+  @@index([courseId, order])
+}
+
+model QuizQuestion {
+  id           String        @id @default(cuid())
+  lessonId     String
+  lesson       Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  prompt       Json
+  options      Json          // { uz: string[], ... }
+  correctIndex Int
+  explanation  Json
+  order        Int           @default(0)
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  score     Int
+  total     Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, lessonId])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  code        String            @unique
+  title       Json
+  description Json
+  icon        String
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Community {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        Json
+  description Json
+  challenge   Json?             // shared educational challenge text
+  teenSafe    Boolean           @default(true)
+  members     CommunityMember[]
+  posts       CommunityPost[]
+}
+
+model CommunityMember {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime  @default(now())
+
+  @@unique([userId, communityId])
+}
+
+model CommunityPost {
+  id          String          @id @default(cuid())
+  communityId String
+  community   Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      CommunityPost?  @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     CommunityPost[] @relation("Replies")
+  body        String          @db.VarChar(1000)
+  status      PostStatus      @default(VISIBLE)
+  cheers      Int             @default(0)
+  createdAt   DateTime        @default(now())
+  reports     Report[]
+
+  @@index([communityId, status, createdAt])
+}
+
+model Report {
+  id         String        @id @default(cuid())
+  postId     String
+  post       CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User          @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String        @db.VarChar(300)
+  status     ReportStatus  @default(OPEN)
+  createdAt  DateTime      @default(now())
+  resolvedAt DateTime?
+
+  @@unique([postId, reporterId])
+  @@index([status])
+}
+
+model AIConversation {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String      @db.VarChar(120)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  messages  AIMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model AIMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String         // user | assistant
+  content        String         @db.Text
+  flagged        String?        // safety category if a guardrail fired
+  createdAt      DateTime       @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String   // achievement | reminder | moderation | system
+  title     String   @db.VarChar(160)
+  body      String?  @db.VarChar(500)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. auth.login, account.delete, admin.role_change
+  target    String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([action, createdAt])
+}
+
+model ErrorLog {
+  id        String   @id @default(cuid())
+  scope     String
+  message   String   @db.VarChar(1000)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Fixed-window rate limiting stored in Postgres so it works on serverless (no shared memory).
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  windowEnd DateTime
+}
