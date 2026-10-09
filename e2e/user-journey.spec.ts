@@ -126,6 +126,7 @@ test("teen accounts never see calorie numbers", async ({ page }, info) => {
   await go(page, "/settings");
   await page.locator("#s-ai").check();
   await page.getByRole("button", { name: "Saqlash" }).first().click();
+  await expect(page.getByText("Sozlamalar saqlandi.")).toBeVisible();
   await go(page, "/nutrition/scan");
   await page.locator("#food-photo").setInputFiles(path.join(__dirname, "fixtures-meal.jpg"));
   await page.getByRole("button", { name: "Rasmni tahlil qilish" }).click();
@@ -150,7 +151,7 @@ test("security basics", async ({ page, request }) => {
   // Wrong password gives a generic message
   await go(page, "/login");
   await page.getByLabel("Email").fill("nobody@test.local");
-  await page.getByLabel("Parol").fill("wrong-password-1");
+  await page.getByLabel("Parol", { exact: true }).fill("wrong-password-1");
   await page.getByRole("button", { name: "Kirish" }).click();
   await expect(page.getByText("Email yoki parol notoʻgʻri.")).toBeVisible();
 });

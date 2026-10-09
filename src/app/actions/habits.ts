@@ -5,6 +5,7 @@ import { assertUser } from "@/lib/auth/guards";
 import { habitSchema } from "@/lib/validation";
 import { startOfDayUTC } from "@/lib/utils";
 import { evaluateAchievements } from "@/lib/achievements";
+import { awardCoins } from "@/lib/coins";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/action-state";
 
@@ -41,7 +42,11 @@ export async function toggleHabitAction(formData: FormData) {
   if (!habit) return;
   const existing = await db.habitEntry.findUnique({ where: { habitId_date: { habitId, date } } });
   if (existing) await db.habitEntry.delete({ where: { id: existing.id } });
-  else await db.habitEntry.create({ data: { habitId, date } });
+  else {
+    await db.habitEntry.create({ data: { habitId, date } });
+    // Rewarded once per habit per day — un-ticking and re-ticking doesn't pay twice.
+    await awardCoins(user.id, "habit", `habit:${habitId}:${dateStr}`);
+  }
   await evaluateAchievements(user.id, ["habit_25"]);
   refresh();
 }

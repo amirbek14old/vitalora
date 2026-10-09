@@ -5,6 +5,8 @@ import { assertUser } from "@/lib/auth/guards";
 import { workoutSchema } from "@/lib/validation";
 import { evaluateAchievements } from "@/lib/achievements";
 import { getI18n } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/config";
+import { awardCoins } from "@/lib/coins";
 import type { ActionState } from "@/lib/action-state";
 
 export async function logWorkoutAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -24,7 +26,7 @@ export async function logWorkoutAction(_prev: ActionState, formData: FormData): 
     ? await db.exercise.findMany({ where: { slug: { in: exerciseSlugs }, published: true }, select: { id: true, durationSec: true } })
     : [];
 
-  await db.workoutSession.create({
+  const session = await db.workoutSession.create({
     data: {
       ...data,
       notes: data.notes || null,
@@ -32,10 +34,11 @@ export async function logWorkoutAction(_prev: ActionState, formData: FormData): 
       logs: { create: exercises.map((e) => ({ exerciseId: e.id, durationSec: e.durationSec })) },
     },
   });
+  const coins = await awardCoins(user.id, "workout", `workout:${session.id}`);
   await evaluateAchievements(user.id, ["first_workout", "ten_workouts"]);
   revalidatePath("/fitness/history");
   revalidatePath("/dashboard");
-  return { ok: true, message: t.fitness.logged };
+  return { ok: true, message: coins ? `${t.fitness.logged} ${fmt(t.coins.earned, { n: coins })}` : t.fitness.logged };
 }
 
 export async function deleteWorkoutAction(formData: FormData) {

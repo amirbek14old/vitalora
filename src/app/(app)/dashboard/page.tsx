@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, BookOpen, Dumbbell, ListChecks, Moon, Sparkles } from "lucide-react";
+import { Activity, BookOpen, Camera, Coins, Dumbbell, ListChecks, Moon, Sparkles } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser, isTeen } from "@/lib/auth/guards";
 import { getI18n } from "@/lib/i18n/server";
@@ -61,6 +61,17 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold sm:text-3xl">{fmt(t.dashboard.greeting, { name: user.profile?.displayName ?? "" })}</h1>
         <p className="text-slate-600 dark:text-slate-300">{t.dashboard.subtitle} <span className="text-xs">({t.common.selfReported})</span></p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/fitness/coach" className="flex items-center gap-4 rounded-2xl bg-gradient-to-r from-brand-700 to-brand-500 p-4 text-white shadow-sm hover:opacity-95">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20"><Camera className="h-6 w-6" aria-hidden /></span>
+          <span><span className="block font-semibold">{t.coach.title}</span><span className="block text-sm opacity-90">{t.coach.subtitle}</span></span>
+        </Link>
+        <Link href="/shop" className="flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/40 dark:hover:bg-amber-950/60">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-200 text-amber-700 dark:bg-amber-900 dark:text-amber-200"><Coins className="h-6 w-6" aria-hidden /></span>
+          <span><span className="block font-semibold">{user.coins} {t.coins.balance.toLowerCase()}</span><span className="block text-sm text-slate-600 dark:text-slate-300">{t.shop.subtitle}</span></span>
+        </Link>
       </div>
 
       <section aria-label={t.common.thisWeek} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { awardCoins } from "@/lib/coins";
 
 type Check = (userId: string) => Promise<boolean>;
 
@@ -39,6 +40,7 @@ export async function evaluateAchievements(userId: string, only?: string[]): Pro
     await db.userAchievement.create({ data: { userId, achievementId: def.id } }).catch(() => null);
     // Store the code; the UI renders the localised achievement title.
     await db.notification.create({ data: { userId, kind: "achievement", title: def.code } });
+    await awardCoins(userId, "achievement", `ach:${def.code}`);
     granted.push(def.code);
   }
   return granted;

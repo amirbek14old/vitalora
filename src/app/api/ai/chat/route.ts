@@ -12,6 +12,8 @@ import { classifyInput, guardOutput, isBlockingCategory, safeResponse } from "@/
 import { getWeeklyStats, summariseForAI } from "@/lib/stats";
 import { logError } from "@/lib/audit";
 import { getLocale } from "@/lib/i18n/server";
+import { isPro } from "@/lib/coins";
+import { PRO_LIMIT_MULTIPLIER } from "@/lib/coin-rules";
 
 export const dynamic = "force-dynamic";
 const HISTORY_LIMIT = 12;
@@ -26,15 +28,16 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400 });
   const { message, mode } = parsed.data;
 
-  const rl = await rateLimit(`ai:${user.id}`, LIMITS.aiChat.limit, LIMITS.aiChat.window);
+  const rl = await rateLimit(`ai:${user.id}`, LIMITS.aiChat.limit * (isPro(user) ? PRO_LIMIT_MULTIPLIER : 1), LIMITS.aiChat.window);
   if (!rl.ok) return NextResponse.json({ error: "rate_limited", resetAt: rl.resetAt }, { status: 429 });
 
   const locale = await getLocale();
   const teen = isTeen(user);
 
-  // Insight mode is stateless (dashboard); chat/recipe modes are stored as conversations.
+  // Insight and form modes are stateless; chat/recipe modes are stored as conversations.
   let conversationId = parsed.data.conversationId;
-  if (mode !== "insight") {
+  const stateless = mode === "insight" || mode === "form";
+  if (!stateless) {
     if (conversationId) {
       const owned = await db.aIConversation.findFirst({ where: { id: conversationId, userId: user.id }, select: { id: true } });
       if (!owned) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -49,7 +52,7 @@ export async function POST(req: Request) {
   const category = classifyInput(message);
   if (isBlockingCategory(category)) {
     const reply = safeResponse(category, locale);
-    if (conversationId && mode !== "insight") {
+    if (conversationId && !stateless) {
       await db.aIMessage.create({ data: { conversationId, role: "assistant", content: reply, flagged: category } });
     }
     return NextResponse.json({ conversationId, reply, flagged: category });
@@ -71,7 +74,7 @@ export async function POST(req: Request) {
   }
 
   const history =
-    conversationId && mode !== "insight"
+    conversationId && !stateless
       ? (await db.aIMessage.findMany({ where: { conversationId }, orderBy: { createdAt: "desc" }, take: HISTORY_LIMIT })).reverse()
       : [{ role: "user", content: message }];
 
@@ -79,12 +82,12 @@ export async function POST(req: Request) {
     const raw = await provider.complete({
       system: buildSystemPrompt({ locale, teen, mode, activitySummary }),
       messages: history.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content })),
-      maxTokens: mode === "insight" ? 250 : 900,
+      maxTokens: stateless ? 300 : 900,
     });
     // 3) Output guardrails.
     const { text, flagged } = guardOutput(raw || "", { locale, teen });
     const reply = text || "…";
-    if (conversationId && mode !== "insight") {
+    if (conversationId && !stateless) {
       await db.aIMessage.create({ data: { conversationId, role: "assistant", content: reply, flagged: flagged ?? (category === "medication" ? "medication" : null) } });
       await db.aIConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
     }

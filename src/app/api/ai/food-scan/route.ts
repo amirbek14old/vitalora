@@ -9,6 +9,8 @@ import { buildFoodVisionPrompt } from "@/lib/ai/prompts";
 import { MAX_IMAGE_BYTES, parseFoodAnalysis, sniffImageType, stripNumbers } from "@/lib/ai/food";
 import { logError } from "@/lib/audit";
 import { getLocale } from "@/lib/i18n/server";
+import { isPro } from "@/lib/coins";
+import { PRO_LIMIT_MULTIPLIER } from "@/lib/coin-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!user.preference?.aiConsent) return NextResponse.json({ error: "consent_required" }, { status: 403 });
 
-  const rl = await rateLimit(`food:${user.id}`, LIMITS.foodScan.limit, LIMITS.foodScan.window);
+  const rl = await rateLimit(`food:${user.id}`, LIMITS.foodScan.limit * (isPro(user) ? PRO_LIMIT_MULTIPLIER : 1), LIMITS.foodScan.window);
   if (!rl.ok) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const form = await req.formData().catch(() => null);

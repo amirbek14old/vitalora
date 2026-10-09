@@ -6,6 +6,7 @@ import { Field, Input } from "@/components/ui/form";
 import { SubmitButton } from "@/components/submit-button";
 import { FormMessage } from "@/components/form-message";
 import { initialState } from "@/lib/action-state";
+import { PasswordInput } from "./password-input";
 import type { Dictionary } from "@/lib/i18n/types";
 
 export function RegisterForm({ t }: { t: Pick<Dictionary, "auth" | "common" | "nav"> }) {
@@ -14,9 +15,9 @@ export function RegisterForm({ t }: { t: Pick<Dictionary, "auth" | "common" | "n
   return (
     <form action={action} className="space-y-4">
       <FormMessage state={state} />
-      <Field label={t.auth.email} htmlFor="email"><Input id="email" name="email" type="email" autoComplete="email" required /></Field>
+      <Field label={t.auth.email} htmlFor="email"><Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" required /></Field>
       <Field label={t.auth.password} hint={t.auth.passwordHint} htmlFor="password">
-        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={10} required aria-describedby="password-hint" />
+        <PasswordInput id="password" name="password" autoComplete="new-password" minLength={10} required aria-describedby="password-hint" labels={{ show: t.auth.showPassword, hide: t.auth.hidePassword }} />
       </Field>
       <Field label={t.auth.displayName} hint={t.auth.displayNameHint} htmlFor="displayName">
         <Input id="displayName" name="displayName" autoComplete="nickname" minLength={2} maxLength={40} required aria-describedby="displayName-hint" />

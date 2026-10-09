@@ -13,6 +13,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SubmitButton } from "@/components/submit-button";
 import { PostForm } from "@/components/community/post-form";
 import { ReportForm } from "@/components/community/report-form";
+import { publicUserSelect, toAvatarUser } from "@/lib/public-profile";
+import { UserAvatar, DisplayName, ProfileBadge, ProTag } from "@/components/user-avatar";
 
 export default async function CommunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -23,7 +25,7 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
   const membership = await db.communityMember.findUnique({ where: { userId_communityId: { userId: user.id, communityId: community.id } } });
 
   // Only public-safe author fields are selected: never email, birth year or health data.
-  const authorSelect = { id: true, profile: { select: { displayName: true } }, preference: { select: { communityVisible: true } } } as const;
+  const authorSelect = publicUserSelect;
   const posts = await db.communityPost.findMany({
     where: { communityId: community.id, parentId: null, OR: [{ status: "VISIBLE" }, { authorId: user.id }] },
     orderBy: { createdAt: "desc" },
@@ -34,8 +36,10 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
     },
   });
 
-  const name = (a: { id: string; profile: { displayName: string } | null; preference: { communityVisible: boolean } | null }) =>
-    a.id === user.id ? `${a.profile?.displayName ?? ""} (${t.community.you})` : a.preference?.communityVisible ? a.profile?.displayName ?? t.community.anonymous : t.community.anonymous;
+  const name = (a: Parameters<typeof toAvatarUser>[0]) => {
+    const v = toAvatarUser(a, user.id, t.community.anonymous);
+    return { ...v, displayName: a.id === user.id ? `${v.displayName} (${t.community.you})` : v.displayName };
+  };
 
   const postLabels = { placeholder: t.community.write, submit: t.community.post, saving: t.common.saving };
   const reportLabels = { report: t.community.report, reason: t.community.reportReason, submit: t.common.submit };
@@ -105,10 +109,23 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
   );
 }
 
-function PostBody({ post, author, locale, own, labels, report }: { post: { id: string; body: string; createdAt: Date; cheers: number; status: string }; author: string; locale: "uz" | "en" | "ru"; own: boolean; labels: { cheer: string; pending: string; delete: string }; report: React.ReactNode }) {
+function PostBody({ post, author, locale, own, labels, report }: { post: { id: string; body: string; createdAt: Date; cheers: number; status: string }; author: ReturnType<typeof toAvatarUser>; locale: "uz" | "en" | "ru"; own: boolean; labels: { cheer: string; pending: string; delete: string }; report: React.ReactNode }) {
+  const header = (
+    <>
+      <UserAvatar user={author} size="sm" />
+      <span className="flex flex-wrap items-center gap-1.5">
+        <DisplayName name={author.displayName} color={author.nameColor} className="text-sm" />
+        <ProfileBadge code={author.badge} size={14} />
+        {author.pro && <ProTag />}
+      </span>
+    </>
+  );
   return (
     <div>
-      <p className="text-sm font-medium">{author} <span className="font-normal text-slate-500">· {formatDate(post.createdAt, locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></p>
+      <div className="flex items-center gap-2 text-sm font-medium">
+        {author.visible ? <Link href={`/u/${author.id}`} className="flex items-center gap-2 hover:underline">{header}</Link> : <span className="flex items-center gap-2">{header}</span>}
+        <span className="font-normal text-slate-500">· {formatDate(post.createdAt, locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+      </div>
       {post.status === "PENDING" && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{labels.pending}</p>}
       <p className="mt-2 whitespace-pre-line text-slate-800 dark:text-slate-200">{post.body}</p>
       <div className="mt-2 flex flex-wrap items-center gap-4">

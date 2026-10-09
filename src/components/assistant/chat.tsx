@@ -36,10 +36,8 @@ export function Chat({ conversationId: initialId, initialMessages, labels }: { c
         body: JSON.stringify({ message, conversationId, mode: "chat" }),
       });
       const data = await res.json().catch(() => ({}));
-      if (data.conversationId && !conversationId) {
-        setConversationId(data.conversationId);
-        router.replace(`/assistant?c=${data.conversationId}`, { scroll: false });
-      }
+      // Keep the conversation id in state (no navigation → no remount, so typed text is never lost).
+      if (data.conversationId && !conversationId) setConversationId(data.conversationId);
       if (!res.ok) {
         setError(data.error === "not_configured" ? labels.notConfigured : data.error === "rate_limited" ? labels.rateLimited : labels.error);
         return;

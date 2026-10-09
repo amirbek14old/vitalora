@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { exercises } from "./seed-data/exercises";
 import { recipes } from "./seed-data/recipes";
 import { courses, nutritionLessons, achievements, communities } from "./seed-data/education";
+import { shopItems } from "./seed-data/shop";
 
 try {
   process.loadEnvFile?.(".env");
@@ -56,6 +57,12 @@ async function main() {
     await db.community.upsert({ where: { slug: c.slug }, update: c, create: c });
   }
   console.log(`✓ ${communities.length} communities`);
+
+  for (const item of shopItems) {
+    const data = { ...item, proOnly: item.proOnly ?? false };
+    await db.shopItem.upsert({ where: { code: item.code }, update: data, create: data });
+  }
+  console.log(`✓ ${shopItems.length} shop items`);
 
   const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase();
   const password = process.env.SEED_ADMIN_PASSWORD;

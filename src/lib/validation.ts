@@ -76,7 +76,7 @@ export const routineSchema = z.object({
 export const chatSchema = z.object({
   conversationId: z.string().cuid().optional(),
   message: z.string().trim().min(1).max(2000),
-  mode: z.enum(["chat", "recipe", "insight"]).optional().default("chat"),
+  mode: z.enum(["chat", "recipe", "insight", "form"]).optional().default("chat"),
 });
 
 export const postSchema = z.object({
@@ -122,3 +122,14 @@ export function formBool(fd: FormData, key: string): boolean {
   const v = fd.get(key);
   return v === "on" || v === "true" || v === "1";
 }
+
+export const formSessionSchema = z
+  .object({
+    exercise: z.enum(["pushup", "squat"]),
+    reps: z.number().int().min(0).max(500),
+    goodReps: z.number().int().min(0).max(500),
+    avgScore: z.number().int().min(0).max(100),
+    durationSec: z.number().int().min(5).max(3600),
+  })
+  // Plausibility: good ≤ total and at most ~1.5 reps per second.
+  .refine((v) => v.goodReps <= v.reps && v.reps <= Math.ceil(v.durationSec * 1.5));

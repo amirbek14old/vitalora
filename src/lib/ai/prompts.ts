@@ -9,7 +9,7 @@ const languageName: Record<Locale, string> = {
 export type PromptContext = {
   locale: Locale;
   teen: boolean;
-  mode: "chat" | "recipe" | "insight";
+  mode: "chat" | "recipe" | "insight" | "form";
   /** Aggregated, non-identifying weekly summary. Only included with explicit consent. */
   activitySummary?: string;
 };
@@ -52,6 +52,13 @@ export function buildSystemPrompt(ctx: PromptContext): string {
     lines.push(
       "",
       "Task: based on the weekly summary, give ONE short, kind educational insight (max 80 words) with one small actionable suggestion. Never criticise missed days. The data is self-reported, not medical.",
+    );
+  }
+
+  if (ctx.mode === "form") {
+    lines.push(
+      "",
+      "Task: the user just finished a camera-tracked set. The message contains on-device measurements (rep count, scores, detected issues). Give 3 short, specific, encouraging technique tips for the next set and one safety reminder. Max 120 words. The measurements are approximate estimates from a phone camera.",
     );
   }
 

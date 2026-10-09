@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Award, BookOpen, Bot, Camera, ChefHat, Dumbbell, HelpCircle, History, LayoutDashboard, ListChecks, Moon, Salad, Settings, Shield, User, Users,
+  Award, BookOpen, Bot, Camera, ChefHat, Dumbbell, HelpCircle, History, LayoutDashboard, ListChecks, Moon, Salad, Settings, Shield, ShoppingBag, User, Users, Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const icons = {
   dashboard: LayoutDashboard, fitness: Dumbbell, history: History, nutrition: Salad, recipes: ChefHat, foodScan: Camera, sleep: Moon,
-  habits: ListChecks, assistant: Bot, academy: BookOpen, community: Users, achievements: Award, profile: User, settings: Settings, help: HelpCircle, admin: Shield,
+  habits: ListChecks, assistant: Bot, coach: Video, shop: ShoppingBag, academy: BookOpen, community: Users, achievements: Award, profile: User, settings: Settings, help: HelpCircle, admin: Shield,
 } as const;
 
 export type NavItem = { key: keyof typeof icons; href: string; label: string };
@@ -19,7 +19,10 @@ export function AppNav({ items, onNavigate }: { items: NavItem[]; onNavigate?: (
     <ul className="space-y-0.5">
       {items.map((item) => {
         const Icon = icons[item.key];
-        const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+        // Exact match, or a sub-page — unless a more specific item (e.g. /fitness/coach) also matches.
+        const active =
+          pathname === item.href ||
+          (item.href !== "/dashboard" && pathname.startsWith(item.href + "/") && !items.some((o) => o.href !== item.href && o.href.startsWith(item.href + "/") && pathname.startsWith(o.href)));
         return (
           <li key={item.href}>
             <Link

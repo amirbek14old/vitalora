@@ -10,6 +10,7 @@ import { clientIp } from "@/lib/request";
 import { audit } from "@/lib/audit";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/action-state";
+import { safeNext } from "@/lib/safe-redirect";
 
 export async function registerAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { t, locale } = await getI18n();
@@ -69,7 +70,7 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
   await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await audit("auth.login", user.id);
   await createSession(user.id);
-  redirect(user.profile?.onboardingDone ? "/dashboard" : "/onboarding");
+  redirect(user.profile?.onboardingDone ? safeNext(formData.get("next")) : "/onboarding");
 }
 
 export async function logoutAction() {

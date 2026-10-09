@@ -13,7 +13,7 @@ export default defineConfig({
   timeout: 60_000,
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
-  use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure", locale: "uz-UZ" },
+  use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure", locale: "uz-UZ", launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] } },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
@@ -26,7 +26,7 @@ export default defineConfig({
           command: `next start -p ${PORT}`,
           port: PORT,
           reuseExistingServer: true,
-          env: { AI_PROVIDER: "openai", AI_API_KEY: "test", AI_MODEL: "mock-text", AI_VISION_MODEL: "mock-vision", AI_BASE_URL: "http://127.0.0.1:4010" },
+          env: { RATE_LIMIT_MULTIPLIER: "20", AI_PROVIDER: "openai", AI_API_KEY: "test", AI_MODEL: "mock-text", AI_VISION_MODEL: "mock-vision", AI_BASE_URL: "http://127.0.0.1:4010" },
         },
       ],
 });

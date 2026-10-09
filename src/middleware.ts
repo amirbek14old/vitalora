@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Real session validation (DB lookup) happens in server components/actions via getCurrentUser().
 const PROTECTED = [
   "/dashboard", "/onboarding", "/fitness", "/nutrition", "/sleep", "/habits", "/assistant",
-  "/academy", "/community", "/achievements", "/profile", "/settings", "/admin",
+  "/academy", "/community", "/achievements", "/profile", "/settings", "/admin", "/shop", "/u",
 ];
 
 export function middleware(req: NextRequest) {
@@ -13,7 +13,7 @@ export function middleware(req: NextRequest) {
   if (isProtected && !req.cookies.get("vitalora_session")) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
-    url.search = "";
+    url.search = `?next=${encodeURIComponent(pathname + req.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   const res = NextResponse.next();
@@ -22,11 +22,12 @@ export function middleware(req: NextRequest) {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+      `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${dev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src 'self' https://storage.googleapis.com", // MediaPipe pose model (camera coach)
+      "worker-src 'self' blob:",
       "media-src 'self' https:",
       "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
       "frame-ancestors 'none'",
@@ -38,5 +39,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|icons/|mediapipe/|manifest.webmanifest).*)"],
 };

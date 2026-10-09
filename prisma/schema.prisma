@@ -77,6 +77,14 @@ model User {
   aiConversations  AIConversation[]
   notifications    Notification[]
   auditLogs        AuditLog[]
+
+  // Motivation economy (coins are earned only — never bought with money)
+  coins            Int               @default(0)
+  proUntil         DateTime?
+  avatar           Avatar?
+  items            UserItem[]
+  coinTransactions CoinTransaction[]
+  formSessions     FormCheckSession[]
 }
 
 model Session {
@@ -103,6 +111,11 @@ model Profile {
   minutesPerDay     Int        @default(20)
   onboardingDone    Boolean    @default(false)
   bio               String?    @db.VarChar(280)
+  // Equipped cosmetics (ShopItem codes)
+  equippedFrame     String?
+  equippedBanner    String?
+  equippedNameColor String?
+  equippedBadge     String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 }
@@ -461,4 +474,74 @@ model RateLimitBucket {
   key       String   @id
   count     Int
   windowEnd DateTime
+}
+
+enum ShopItemKind {
+  FRAME
+  BANNER
+  NAME_COLOR
+  BADGE
+  PRO_PASS
+}
+
+// Profile photo stored in the DB (already resized to ≤256px on the device, ≤200 KB).
+model Avatar {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mime      String
+  data      Bytes
+  updatedAt DateTime @updatedAt
+}
+
+model ShopItem {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  kind      ShopItemKind
+  name      Json
+  price     Int
+  proOnly   Boolean      @default(false)
+  style     String       // key interpreted by src/lib/cosmetics.ts
+  sortOrder Int          @default(0)
+  active    Boolean      @default(true)
+  owners    UserItem[]
+}
+
+model UserItem {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+}
+
+// Append-only coin ledger. refKey makes each reward idempotent (e.g. "habit:<id>:2026-10-09").
+model CoinTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  refKey    String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, refKey])
+  @@index([userId, createdAt])
+}
+
+// Result of an on-device camera form check (no video is stored or uploaded).
+model FormCheckSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise    String   // pushup | squat
+  reps        Int
+  goodReps    Int
+  avgScore    Int
+  durationSec Int
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
 }

@@ -10,12 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: t.meta.title, template: "%s · VITALORA AI" },
     description: t.meta.description,
     applicationName: "VITALORA AI",
+    appleWebApp: { capable: true, title: "VITALORA", statusBarStyle: "default" },
+    icons: { apple: "/icons/apple-touch-icon.png" },
+    formatDetection: { telephone: false },
   };
 }
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
     { media: "(prefers-color-scheme: dark)", color: "#0B1220" },

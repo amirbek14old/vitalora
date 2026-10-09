@@ -1,4 +1,7 @@
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { Coins, LogOut } from "lucide-react";
+import { BottomNav } from "./bottom-nav";
+import { UserAvatar, type AvatarUser } from "./user-avatar";
 import { Logo } from "./logo";
 import { AppNav, MobileNav, type NavItem } from "./app-nav";
 import { LanguageSwitcher } from "./language-switcher";
@@ -7,10 +10,11 @@ import { logoutAction } from "@/app/actions/auth";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { Locale } from "@/lib/i18n/config";
 
-export function AppShell({ t, locale, theme, role, children }: { t: Dictionary; locale: Locale; theme: "light" | "dark" | "system"; role: string; children: React.ReactNode }) {
+export function AppShell({ t, locale, theme, role, coins, me, children }: { t: Dictionary; locale: Locale; theme: "light" | "dark" | "system"; role: string; coins: number; me: AvatarUser; children: React.ReactNode }) {
   const items: NavItem[] = [
     { key: "dashboard", href: "/dashboard", label: t.nav.dashboard },
     { key: "fitness", href: "/fitness", label: t.nav.fitness },
+    { key: "coach", href: "/fitness/coach", label: t.nav.coach },
     { key: "history", href: "/fitness/history", label: t.nav.history },
     { key: "nutrition", href: "/nutrition", label: t.nav.nutrition },
     { key: "recipes", href: "/nutrition/recipes", label: t.nav.recipes },
@@ -21,6 +25,7 @@ export function AppShell({ t, locale, theme, role, children }: { t: Dictionary; 
     { key: "academy", href: "/academy", label: t.nav.academy },
     { key: "community", href: "/community", label: t.nav.community },
     { key: "achievements", href: "/achievements", label: t.nav.achievements },
+    { key: "shop", href: "/shop", label: t.nav.shop },
     { key: "profile", href: "/profile", label: t.nav.profile },
     { key: "settings", href: "/settings", label: t.nav.settings },
     { key: "help", href: "/help", label: t.nav.help },
@@ -51,22 +56,30 @@ export function AppShell({ t, locale, theme, role, children }: { t: Dictionary; 
           </div>
           <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
+            <Link href="/shop" prefetch={false} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-100 px-3 text-sm font-semibold text-amber-800 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-200" aria-label={`${t.coins.balance}: ${coins}`}>
+              <Coins className="h-4 w-4" aria-hidden />{coins}
+            </Link>
+            <Link href="/profile" prefetch={false} className="hidden lg:block" aria-label={t.nav.profile}><UserAvatar user={me} size="sm" /></Link>
             <div className="hidden sm:block"><LanguageSwitcher locale={locale} label={t.common.language} /></div>
-            <ThemeToggle initial={theme} labels={{ light: t.common.light, dark: t.common.dark, system: t.common.system }} />
+            <div className="hidden sm:block"><ThemeToggle initial={theme} labels={{ light: t.common.light, dark: t.common.dark, system: t.common.system }} /></div>
             <MobileNav
               items={items}
               menuLabel={t.nav.menu}
               extra={
                 <>
-                  <div className="px-3 sm:hidden"><LanguageSwitcher id="locale-select-mobile" locale={locale} label={t.common.language} /></div>
+                  <div className="flex items-center justify-between px-3 sm:hidden">
+                    <LanguageSwitcher id="locale-select-mobile" locale={locale} label={t.common.language} />
+                    <ThemeToggle initial={theme} labels={{ light: t.common.light, dark: t.common.dark, system: t.common.system }} />
+                  </div>
                   {logout}
                 </>
               }
             />
           </div>
         </header>
-        <main id="main" className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</main>
+        <main id="main" className="mx-auto max-w-6xl px-4 pb-28 pt-6 sm:pt-8 lg:pb-10">{children}</main>
       </div>
+      <BottomNav labels={{ dashboard: t.nav.tabHome, fitness: t.nav.fitness, coach: t.nav.coach, habits: t.nav.habits, profile: t.nav.profile }} />
     </div>
   );
 }

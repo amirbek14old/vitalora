@@ -7,6 +7,8 @@ import { sleepLogSchema } from "@/lib/validation";
 import { sleepMinutes } from "@/lib/utils";
 import { evaluateAchievements } from "@/lib/achievements";
 import { getI18n } from "@/lib/i18n/server";
+import { fmt } from "@/lib/i18n/config";
+import { awardCoins } from "@/lib/coins";
 import type { ActionState } from "@/lib/action-state";
 
 export async function logSleepAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -24,10 +26,11 @@ export async function logSleepAction(_prev: ActionState, formData: FormData): Pr
     update: data,
     create: { ...data, userId: user.id, date: day },
   });
+  const coins = await awardCoins(user.id, "sleep", `sleep:${date}`);
   await evaluateAchievements(user.id, ["first_sleep_log", "sleep_week"]);
   revalidatePath("/sleep");
   revalidatePath("/dashboard");
-  return { ok: true, message: t.sleep.saved };
+  return { ok: true, message: coins ? `${t.sleep.saved} ${fmt(t.coins.earned, { n: coins })}` : t.sleep.saved };
 }
 
 const routineSchema = z.array(z.object({ id: z.string().max(40), label: z.string().trim().min(1).max(80), done: z.boolean() })).max(15);
