@@ -10,6 +10,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    "/**/*": ["./node_modules/.prisma/client/**/*", "./node_modules/@prisma/client/runtime/**/*"],
+  },
   experimental: {
     serverActions: { bodySizeLimit: "2mb" },
   },
