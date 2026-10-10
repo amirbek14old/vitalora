@@ -21,6 +21,8 @@ export function getAIProvider(): AIProvider {
     baseUrl: process.env.AI_BASE_URL?.trim() || (isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai" : undefined),
     // Gemini 2.5 Flash "thinks" by default and spends the answer budget on it — turn that off for fast, complete answers.
     reasoningEffort: process.env.AI_REASONING_EFFORT?.trim() || (isGemini && /2\.5-flash/.test(model) ? "none" : undefined),
+    // Photos are harder: let Gemini think a little for better food recognition.
+    visionReasoningEffort: process.env.AI_VISION_REASONING_EFFORT?.trim() || (isGemini ? "low" : undefined),
   };
   switch (provider) {
     case "anthropic":

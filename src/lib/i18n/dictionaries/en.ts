@@ -529,6 +529,8 @@ const en = {
       getReady: "Get into position",
       goLower: "Go a bit lower",
       keepBodyStraight: "Keep your body in a straight line",
+      getIntoPlank: "Get into a push-up position (plank, side-on to the camera)",
+      standUp: "Stand up straight, side-on to the camera",
       fullExtension: "Straighten your arms fully at the top",
       slowDown: "Slow down — control the movement",
       chestUp: "Keep your chest up",

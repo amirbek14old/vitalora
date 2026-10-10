@@ -531,6 +531,8 @@ const uz: Dictionary = {
       getReady: "Boshlangʻich holatga turing",
       goLower: "Biroz pastroq tushing",
       keepBodyStraight: "Tanangizni toʻgʻri chiziqda ushlang",
+      getIntoPlank: "Otjimaniya holatiga oʻting (planka, kameraga yon tomon bilan)",
+      standUp: "Toʻgʻri turing, kameraga yon tomon bilan",
       fullExtension: "Yuqorida qoʻllaringizni toʻliq toʻgʻrilang",
       slowDown: "Sekinroq — harakatni nazorat qiling",
       chestUp: "Koʻkragingizni tik tuting",

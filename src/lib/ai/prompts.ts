@@ -72,8 +72,10 @@ export function buildSystemPrompt(ctx: PromptContext): string {
 export function buildFoodVisionPrompt(locale: Locale): string {
   return [
     "You analyse a photo of a meal for an educational nutrition app.",
-    "Identify each visible food or dish (recognise Central Asian / Uzbek dishes such as osh/plov, lagman, manti, somsa, shurpa, non, achichuk salad when present).",
-    "Estimate the portion in grams and approximate energy (kcal) and macronutrients for that portion, using typical recipes.",
+    "Look carefully and identify only what is actually visible. Name the food as specifically as you can (e.g. 'croissant', 'cola (0.5 L bottle)', 'chicken plov'). Do not guess a regional dish unless it clearly looks like one.",
+    "Read labels on packaged food and drinks when visible. If a container is empty or almost empty, estimate only what is left (it may be 0).",
+    "Estimate the portion in grams (millilitres for drinks) from visual cues such as plate, hand or package size, and approximate energy (kcal) and macronutrients for that portion, using typical recipes.",
+    "Set confidence to 'low' when the food is hard to see or partly hidden.",
     `Write food names in ${languageName[locale]}.`,
     "Respond with ONLY a JSON object, no markdown, in this exact shape:",
     '{"isFood": boolean, "items": [{"name": string, "portionGrams": number, "kcal": number, "proteinG": number, "carbsG": number, "fatG": number, "foodGroup": "vegetables"|"fruits"|"grains"|"protein"|"dairy"|"fats"|"sweets"|"drinks"|"mixed", "confidence": "low"|"medium"|"high"}], "balanceNote": string}',

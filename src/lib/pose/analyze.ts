@@ -16,6 +16,8 @@ export type FeedbackKey =
   | "slowDown"
   | "chestUp"
   | "standTall"
+  | "getIntoPlank"
+  | "standUp"
   | "great";
 
 export const LM = {
@@ -50,13 +52,32 @@ function side(lm: Landmark[]) {
   return { s: lm[s], e: lm[e], w: lm[w], h: lm[h], k: lm[k], a: lm[a] };
 }
 
-export type Metrics = { visible: boolean; elbow: number; body: number; knee: number; torsoLean: number };
+export type Metrics = {
+  visible: boolean;
+  elbow: number;
+  body: number;
+  knee: number;
+  torsoLean: number;
+  /** Shin (knee→ankle) angle from vertical: ~0° standing/squatting, ~90° in a plank. */
+  shinTilt: number;
+  /** Shoulder→ankle line angle from horizontal: ~0° in a plank, ~90° standing. */
+  bodyTilt: number;
+  shoulderY: number;
+  hipY: number;
+  upperArm: number;
+  thigh: number;
+};
+
+const tiltFromVertical = (a: Landmark, b: Landmark) => (Math.atan2(Math.abs(b.x - a.x), Math.abs(b.y - a.y) || 1e-6) * 180) / Math.PI;
+const dist = (a: Landmark, b: Landmark) => Math.hypot(a.x - b.x, a.y - b.y);
+
+const HIDDEN: Metrics = { visible: false, elbow: 180, body: 180, knee: 180, torsoLean: 0, shinTilt: 0, bodyTilt: 90, shoulderY: 0, hipY: 0, upperArm: 0, thigh: 0 };
 
 export function metrics(lm: Landmark[], exercise: Exercise, minVisibility = 0.5): Metrics {
   const p = side(lm);
-  const needed = exercise === "pushup" ? [p.s, p.e, p.w, p.h, p.a] : [p.s, p.h, p.k, p.a];
+  const needed = exercise === "pushup" ? [p.s, p.e, p.w, p.h, p.k, p.a] : [p.s, p.h, p.k, p.a];
   const visible = needed.every((x) => x && vis(x) >= minVisibility);
-  if (!visible) return { visible: false, elbow: 180, body: 180, knee: 180, torsoLean: 0 };
+  if (!visible) return HIDDEN;
   // Torso lean: angle between hip→shoulder and straight up (image y grows downward).
   const dx = p.s.x - p.h.x, dy = p.h.y - p.s.y;
   const torsoLean = (Math.atan2(Math.abs(dx), Math.max(1e-6, dy)) * 180) / Math.PI;
@@ -66,7 +87,19 @@ export function metrics(lm: Landmark[], exercise: Exercise, minVisibility = 0.5)
     body: angle(p.s, p.h, p.a),
     knee: angle(p.h, p.k, p.a),
     torsoLean: dy <= 0 ? 90 : torsoLean,
+    shinTilt: tiltFromVertical(p.k, p.a),
+    bodyTilt: 90 - tiltFromVertical(p.s, p.a),
+    shoulderY: p.s.y,
+    hipY: p.h.y,
+    upperArm: p.e ? dist(p.s, p.e) : 0,
+    thigh: dist(p.h, p.k),
   };
+}
+
+/** Is the body in the right position for the chosen exercise? (Stops squats counting as push-ups and vice versa.) */
+export function postureOk(m: Metrics, exercise: Exercise): boolean {
+  if (exercise === "pushup") return m.bodyTilt < 40 && m.shinTilt > 45; // horizontal plank
+  return m.shinTilt < 55 && m.bodyTilt > 45; // standing / squatting upright
 }
 
 export type RepResult = { score: number; good: boolean; issues: FeedbackKey[] };
@@ -80,6 +113,9 @@ export type CounterState = {
   scores: number[];
   issueCounts: Partial<Record<FeedbackKey, number>>;
 };
+
+/** Minimum shoulder/hip travel during a rep, as a share of the upper-arm/thigh length. */
+const MIN_TRAVEL = { pushup: 0.25, squat: 0.3 };
 
 const CFG = {
   pushup: { down: 95, up: 150, goodDepth: 100, lockout: 155, bodyMin: 160, bodyWarn: 150 },
@@ -98,6 +134,9 @@ export class RepCounter {
   private worstBody = 180;
   private maxLean = 0;
   private topAngle = 0;
+  private minY = Infinity; // shoulder (push-up) or hip (squat) height range during the rep
+  private maxY = -Infinity;
+  private segment = 0; // upper arm (push-up) or thigh (squat) length, to normalise the movement
 
   constructor(public readonly exercise: Exercise, private readonly alpha = 0.5) {}
 
@@ -105,6 +144,12 @@ export class RepCounter {
     if (!lm || lm.length < 29) return this.set("notVisible");
     const m = metrics(lm, this.exercise);
     if (!m.visible) return this.set("notVisible");
+    if (!postureOk(m, this.exercise)) {
+      // Wrong position for this exercise: drop any rep in progress and tell the user how to get into position.
+      this.resetRep();
+      this.state.phase = "up";
+      return this.set(this.exercise === "pushup" ? "getIntoPlank" : "standUp");
+    }
 
     const raw = this.exercise === "pushup" ? m.elbow : m.knee;
     this.smooth = this.smooth == null ? raw : this.alpha * raw + (1 - this.alpha) * this.smooth;
@@ -128,6 +173,10 @@ export class RepCounter {
       this.minMain = Math.min(this.minMain, a);
       this.worstBody = Math.min(this.worstBody, m.body);
       this.maxLean = Math.max(this.maxLean, m.torsoLean);
+      const y = this.exercise === "pushup" ? m.shoulderY : m.hipY;
+      this.minY = Math.min(this.minY, y);
+      this.maxY = Math.max(this.maxY, y);
+      this.segment = Math.max(this.segment, this.exercise === "pushup" ? m.upperArm : m.thigh);
     }
 
     // Live cue
@@ -140,6 +189,14 @@ export class RepCounter {
 
   private finishRep(timeMs: number) {
     const cfg = CFG[this.exercise];
+    // The body must actually move (shoulders go down in a push-up, hips go down in a squat) —
+    // bending only the arms or knees in place doesn't count.
+    const moved = this.segment > 0 && this.maxY - this.minY >= MIN_TRAVEL[this.exercise] * this.segment;
+    if (!moved) {
+      this.resetRep();
+      this.state.phase = "up";
+      return;
+    }
     const issues: FeedbackKey[] = [];
     let score = 100;
     if (this.minMain > cfg.goodDepth) { score -= 30; issues.push("goLower"); }
@@ -158,12 +215,18 @@ export class RepCounter {
     s.lastRep = { score, good, issues };
     for (const i of issues) s.issueCounts[i] = (s.issueCounts[i] ?? 0) + 1;
     s.phase = "up";
+    this.resetRep();
+  }
 
+  private resetRep() {
     this.repStart = 0;
     this.minMain = 180;
     this.worstBody = 180;
     this.maxLean = 0;
     this.topAngle = 0;
+    this.minY = Infinity;
+    this.maxY = -Infinity;
+    this.segment = 0;
   }
 
   private set(live: FeedbackKey): CounterState {

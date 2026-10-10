@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       system: buildFoodVisionPrompt(locale),
       messages: [{ role: "user", content: "Analyse this meal photo and return the JSON object." }],
       image: { mediaType, base64: Buffer.from(bytes).toString("base64") },
-      maxTokens: 2000,
+      maxTokens: 4000, // includes the model's thinking budget
       json: true,
     });
     const analysis = parseFoodAnalysis(raw);

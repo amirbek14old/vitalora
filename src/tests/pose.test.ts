@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { angle, metrics, RepCounter, LM, type Landmark } from "@/lib/pose/analyze";
 
-/** Build a side-view push-up pose with a given elbow angle and hip offset (sag > 0, pike < 0). */
+/** Side-view push-up: wrist on the floor, forearm vertical, shoulder moves down as the elbow bends.
+ *  hipOffset > 0 = sagging hips, < 0 = pike. */
 function pushupPose(elbowDeg: number, hipOffset = 0): Landmark[] {
   const lm: Landmark[] = Array.from({ length: 33 }, () => ({ x: 0, y: 0, visibility: 0.1 }));
-  const S = { x: 0.3, y: 0.5 }, A = { x: 0.9, y: 0.5 };
-  const H = { x: 0.6, y: 0.5 + hipOffset };
-  const E = { x: 0.3, y: 0.62 };
-  // wrist: rotate the E→S direction (pointing up) by elbowDeg around E
+  const floor = 0.8, u = 0.12;
+  const W = { x: 0.3, y: floor };
+  const E = { x: 0.3, y: floor - u };
   const r = (elbowDeg * Math.PI) / 180;
-  const W = { x: E.x + 0.12 * Math.sin(r), y: E.y - 0.12 * Math.cos(r) };
+  const S = { x: E.x + u * Math.sin(r), y: E.y + u * Math.cos(r) };
+  const A = { x: 0.95, y: floor - 0.02 };
+  const lerp = (t: number) => ({ x: S.x + (A.x - S.x) * t, y: S.y + (A.y - S.y) * t });
+  const H = { ...lerp(0.45), y: lerp(0.45).y + hipOffset };
+  const K = lerp(0.75);
   const set = (i: number, p: { x: number; y: number }) => (lm[i] = { ...p, visibility: 0.99 });
-  set(LM.L_SHOULDER, S); set(LM.L_ELBOW, E); set(LM.L_WRIST, W); set(LM.L_HIP, H); set(LM.L_KNEE, { x: 0.75, y: 0.5 }); set(LM.L_ANKLE, A);
+  set(LM.L_SHOULDER, S); set(LM.L_ELBOW, E); set(LM.L_WRIST, W); set(LM.L_HIP, H); set(LM.L_KNEE, K); set(LM.L_ANKLE, A);
   return lm;
 }
 
@@ -43,6 +47,7 @@ describe("geometry", () => {
     const m = metrics(pushupPose(90), "pushup");
     expect(Math.round(m.elbow)).toBe(90);
     expect(Math.round(m.body)).toBe(180);
+    expect(m.bodyTilt).toBeLessThan(15);
   });
 
   it("reports when the body is not visible", () => {
@@ -93,5 +98,37 @@ describe("squat counter", () => {
   it("flags excessive forward lean", () => {
     const s = run(new RepCounter("squat"), rep(85, 65));
     expect(s.lastRep?.issues).toContain("chestUp");
+  });
+});
+
+describe("exercise position check", () => {
+  it("does not count squats while push-ups are selected", () => {
+    const squats = [...sweep(175, 85, 12), ...sweep(85, 175, 12)].map((k) => squatPose(k));
+    const c = new RepCounter("pushup");
+    const s = run(c, [...squats, ...squats]);
+    expect(s.reps).toBe(0);
+    expect(s.live).toBe("getIntoPlank");
+  });
+
+  it("does not count push-ups while squats are selected", () => {
+    const pushups = [...sweep(170, 75, 12), ...sweep(75, 170, 12)].map((a) => pushupPose(a));
+    const c = new RepCounter("squat");
+    const s = run(c, [...pushups, ...pushups]);
+    expect(s.reps).toBe(0);
+    expect(s.live).toBe("standUp");
+  });
+
+  it("does not count bending the arms without lowering the body", () => {
+    // Plank position, but the shoulder stays at the same height (only the wrist moves).
+    const frames = [...sweep(170, 70, 12), ...sweep(70, 170, 12)].map((a) => {
+      const lm = pushupPose(170);
+      const E = lm[LM.L_ELBOW], S = lm[LM.L_SHOULDER];
+      const r = (a * Math.PI) / 180;
+      const dx = S.x - E.x, dy = S.y - E.y; // rotate the elbow→shoulder vector to get the wrist
+      lm[LM.L_WRIST] = { x: E.x + dx * Math.cos(r) - dy * Math.sin(r), y: E.y + dx * Math.sin(r) + dy * Math.cos(r), visibility: 0.99 };
+      return lm;
+    });
+    const s = run(new RepCounter("pushup"), frames);
+    expect(s.reps).toBe(0);
   });
 });

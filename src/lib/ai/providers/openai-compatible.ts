@@ -1,6 +1,6 @@
 import { AIProviderError, type AIProvider, type CompletionRequest } from "../types";
 
-type Config = { apiKey: string; model: string; visionModel: string; baseUrl?: string; reasoningEffort?: string };
+type Config = { apiKey: string; model: string; visionModel: string; baseUrl?: string; reasoningEffort?: string; visionReasoningEffort?: string };
 
 /** Works with OpenAI and other providers exposing an OpenAI-compatible /chat/completions API. */
 export class OpenAICompatibleProvider implements AIProvider {
@@ -30,8 +30,9 @@ export class OpenAICompatibleProvider implements AIProvider {
       max_tokens: req.maxTokens ?? 800,
       messages,
     };
+    const effort = req.image ? this.cfg.visionReasoningEffort ?? this.cfg.reasoningEffort : this.cfg.reasoningEffort;
     const extras: Record<string, unknown> = {
-      ...(this.cfg.reasoningEffort ? { reasoning_effort: this.cfg.reasoningEffort } : {}),
+      ...(effort ? { reasoning_effort: effort } : {}),
       ...(req.json ? { response_format: { type: "json_object" } } : {}),
     };
     const send = (b: Record<string, unknown>) =>
