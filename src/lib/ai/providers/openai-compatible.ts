@@ -1,6 +1,6 @@
 import { AIProviderError, type AIProvider, type CompletionRequest } from "../types";
 
-type Config = { apiKey: string; model: string; visionModel: string; baseUrl?: string };
+type Config = { apiKey: string; model: string; visionModel: string; baseUrl?: string; reasoningEffort?: string };
 
 /** Works with OpenAI and other providers exposing an OpenAI-compatible /chat/completions API. */
 export class OpenAICompatibleProvider implements AIProvider {
@@ -24,17 +24,24 @@ export class OpenAICompatibleProvider implements AIProvider {
       }
     });
 
-    const res = await fetch(`${this.cfg.baseUrl ?? "https://api.openai.com/v1"}/chat/completions`, {
+    const base = (this.cfg.baseUrl ?? "https://api.openai.com/v1").replace(/\/+$/, "");
+    const res = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.cfg.apiKey}` },
       body: JSON.stringify({
         model: req.vision || req.image ? this.cfg.visionModel : this.cfg.model,
         max_tokens: req.maxTokens ?? 800,
         messages,
+        ...(this.cfg.reasoningEffort ? { reasoning_effort: this.cfg.reasoningEffort } : {}),
       }),
       signal: AbortSignal.timeout(60_000),
     });
-    if (!res.ok) throw new AIProviderError(`OpenAI-compatible API error ${res.status}`, res.status);
+    if (!res.ok) {
+      // Log the provider's reason (never the key) so problems are visible in Vercel → Logs.
+      const detail = (await res.text().catch(() => "")).slice(0, 300);
+      console.error(`[ai] ${this.cfg.baseUrl ?? "openai"} → ${res.status}: ${detail}`);
+      throw new AIProviderError(`OpenAI-compatible API error ${res.status}`, res.status);
+    }
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     return data.choices?.[0]?.message?.content?.trim() ?? "";
   }

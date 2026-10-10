@@ -5,7 +5,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { fmt, tr } from "@/lib/i18n/config";
 import { formatDate } from "@/lib/i18n/format";
 import { isPro, REWARDS } from "@/lib/coins";
-import { PRO_COIN_PASS_CODE, PRO_PRICE_USD, shopPrice } from "@/lib/coin-rules";
+import { PRO_COIN_PASS_CODE, PRO_PAID_DAYS, PRO_PRICE_USD, shopPrice } from "@/lib/coin-rules";
 import { ButtonLink } from "@/components/ui/button";
 import { BANNERS, styleFromCode } from "@/lib/cosmetics";
 import { PageHeader } from "@/components/page-header";
@@ -56,7 +56,11 @@ export default async function ShopPage() {
           <ul className="mt-3 grid gap-1 text-sm sm:grid-cols-2">{t.pro.perks.map((p) => <li key={p.title}>✓ {p.title}</li>)}</ul>
           {pro && <p className="mt-3 text-sm font-semibold">{fmt(t.shop.proActiveUntil, { date: formatDate(user.proUntil!, locale) })}</p>}
           <div className="mt-4 flex flex-wrap items-start gap-3">
-            <ButtonLink href="/pro" size="lg" className="bg-white text-orange-700 hover:bg-orange-50">{fmt(t.pro.payCta, { usd: PRO_PRICE_USD })}</ButtonLink>
+            <ButtonLink href="/pro" size="lg" className="gap-3 bg-white text-orange-700 shadow-sm hover:bg-orange-50">
+              <Crown className="h-5 w-5" aria-hidden />
+              <span className="flex items-start leading-none"><span className="mt-0.5 text-xs font-bold">$</span><span className="text-2xl font-black">{PRO_PRICE_USD}</span></span>
+              <span className="text-left text-sm font-semibold leading-tight">{fmt(t.pro.days, { n: PRO_PAID_DAYS })}</span>
+            </ButtonLink>
             {proItem && (
               <BuyProButton code={proItem.code} price={proItem.price} label={t.shop.buyPro} canBuy={user.coins >= proItem.price} disabledLabel={fmt(t.shop.needMore, { n: proItem.price - user.coins })} />
             )}

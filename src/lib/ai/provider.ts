@@ -12,16 +12,21 @@ export function getAIProvider(): AIProvider {
   const apiKey = process.env.AI_API_KEY?.trim();
   const model = process.env.AI_MODEL?.trim();
   if (!provider || !apiKey || !model) throw new AINotConfiguredError();
+  const isGemini = provider === "gemini";
   const cfg = {
     apiKey,
     model,
     visionModel: process.env.AI_VISION_MODEL?.trim() || model,
-    baseUrl: process.env.AI_BASE_URL?.trim() || undefined,
+    // Google Gemini exposes an OpenAI-compatible API (free tier available, no card needed).
+    baseUrl: process.env.AI_BASE_URL?.trim() || (isGemini ? "https://generativelanguage.googleapis.com/v1beta/openai" : undefined),
+    // Gemini 2.5 Flash "thinks" by default and spends the answer budget on it — turn that off for fast, complete answers.
+    reasoningEffort: process.env.AI_REASONING_EFFORT?.trim() || (isGemini && /2\.5-flash/.test(model) ? "none" : undefined),
   };
   switch (provider) {
     case "anthropic":
       return new AnthropicProvider(cfg);
     case "openai":
+    case "gemini":
       return new OpenAICompatibleProvider(cfg);
     default:
       throw new AINotConfiguredError();

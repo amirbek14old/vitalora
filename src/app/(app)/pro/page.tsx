@@ -35,8 +35,17 @@ export default async function ProPage({ searchParams }: { searchParams: Promise<
         <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider opacity-90"><Crown className="h-4 w-4" aria-hidden />VITALORA Pro</p>
         <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{t.pro.headline}</h1>
         <p className="mt-2 max-w-2xl opacity-95">{t.pro.subtitle}</p>
-        <p className="mt-5 text-4xl font-extrabold">${PRO_PRICE_USD}<span className="ml-2 text-lg font-semibold opacity-90">/ {fmt(t.pro.days, { n: PRO_PAID_DAYS })}</span></p>
-        <p className="text-sm opacity-90">≈ {uzs.toLocaleString("ru-RU")} {t.pro.som} · {t.pro.noAutoRenew}</p>
+        <div className="mt-6 inline-flex flex-wrap items-center gap-4 rounded-2xl bg-white/15 px-5 py-4 ring-1 ring-white/30 backdrop-blur-sm">
+          <p className="flex items-start leading-none" aria-label={`$${PRO_PRICE_USD}`}>
+            <span className="mt-1.5 text-2xl font-bold opacity-90">$</span>
+            <span className="text-6xl font-black tracking-tight drop-shadow-sm sm:text-7xl">{PRO_PRICE_USD}</span>
+          </p>
+          <div className="space-y-1">
+            <p className="text-xl font-bold leading-tight">{fmt(t.pro.days, { n: PRO_PAID_DAYS })}</p>
+            <p className="text-sm opacity-90">≈ {uzs.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} {t.pro.som}</p>
+            <span className="inline-block rounded-full bg-white/25 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide">{t.pro.noAutoRenew}</span>
+          </div>
+        </div>
         {pro && (
           <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm font-semibold">
             <Sparkles className="h-4 w-4" aria-hidden />{fmt(t.shop.proActiveUntil, { date: formatDate(user.proUntil!, locale) })}
