@@ -41,12 +41,14 @@ Kamera orqali mashqlar texnikasini tekshiradi.
 - Har bir mukofot `CoinTransaction` jadvaliga yoziladi.
 - `refKey` noyob, shuning uchun bitta vazifa uchun ikki marta tanga berilmaydi.
 - Kunlik chegaralar `src/lib/coin-rules.ts` faylida.
+- Mukofotlar foydalanuvchi boʻyicha navbatga qoʻyiladi (`pg_advisory_xact_lock`), shuning uchun "Saqlash"ni koʻp marta tez bosib chegarani aylanib oʻtib boʻlmaydi.
+- Qoʻlda kiritilgan mashgʻulotlar soatiga 20 ta bilan cheklangan.
 
 **Tanga qanday olinadi:**
 
 | Harakat | Tanga | Chegara |
 |---|---|---|
-| Mashgʻulot | +10 | kuniga 3 ta |
+| Mashgʻulot (kamida 10 daqiqa va kamida 1 ta mashq) | +5 | kuniga 1 ta |
 | Uyqu qaydi | +5 | kuniga 1 ta |
 | Odat belgisi | +2 | kuniga 10 ta |
 | Dars | +15 | — |

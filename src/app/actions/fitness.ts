@@ -7,11 +7,16 @@ import { evaluateAchievements } from "@/lib/achievements";
 import { getI18n } from "@/lib/i18n/server";
 import { fmt } from "@/lib/i18n/config";
 import { awardCoins } from "@/lib/coins";
+import { WORKOUT_MIN_MINUTES_FOR_COINS } from "@/lib/coin-rules";
+import { rateLimit } from "@/lib/rate-limit";
 import type { ActionState } from "@/lib/action-state";
 
 export async function logWorkoutAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await assertUser();
   const { t } = await getI18n();
+  // Stop history spam (and its cost) — honest users never log 20 workouts an hour.
+  const rl = await rateLimit(`workout:${user.id}`, 20, 60 * 60);
+  if (!rl.ok) return { error: t.common.rateLimited };
   const parsed = workoutSchema.safeParse({
     title: formData.get("title"),
     durationMin: formData.get("durationMin"),
@@ -34,7 +39,8 @@ export async function logWorkoutAction(_prev: ActionState, formData: FormData): 
       logs: { create: exercises.map((e) => ({ exerciseId: e.id, durationSec: e.durationSec })) },
     },
   });
-  const coins = await awardCoins(user.id, "workout", `workout:${session.id}`);
+  const eligible = exercises.length > 0 && data.durationMin >= WORKOUT_MIN_MINUTES_FOR_COINS;
+  const coins = eligible ? await awardCoins(user.id, "workout", `workout:${session.id}`) : 0;
   await evaluateAchievements(user.id, ["first_workout", "ten_workouts"]);
   revalidatePath("/fitness/history");
   revalidatePath("/dashboard");

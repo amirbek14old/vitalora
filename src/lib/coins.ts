@@ -21,26 +21,29 @@ export async function awardCoins(userId: string, reason: RewardReason, refKey: s
   if (amount === 0) return 0;
 
   const since = startOfDayUTC(new Date());
-  if (rule.maxPerDay || rule.maxCoinsPerDay) {
-    const today = await db.coinTransaction.aggregate({
-      where: { userId, reason, createdAt: { gte: since } },
-      _count: true,
-      _sum: { amount: true },
-    });
-    if (rule.maxPerDay && today._count >= rule.maxPerDay) return 0;
-    if (rule.maxCoinsPerDay) {
-      const left = rule.maxCoinsPerDay - (today._sum.amount ?? 0);
-      if (left <= 0) return 0;
-      amount = Math.min(amount, left);
-    }
-  }
 
   try {
-    await db.$transaction([
-      db.coinTransaction.create({ data: { userId, amount, reason, refKey } }),
-      db.user.update({ where: { id: userId }, data: { coins: { increment: amount } } }),
-    ]);
-    return amount;
+    return await db.$transaction(async (tx) => {
+      // Serialize rewards per user: concurrent requests (spam-clicking "Save") wait here,
+      // so the daily-cap check below can't be raced.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"coins:" + userId}))`;
+      if (rule.maxPerDay || rule.maxCoinsPerDay) {
+        const today = await tx.coinTransaction.aggregate({
+          where: { userId, reason, createdAt: { gte: since } },
+          _count: true,
+          _sum: { amount: true },
+        });
+        if (rule.maxPerDay && today._count >= rule.maxPerDay) return 0;
+        if (rule.maxCoinsPerDay) {
+          const left = rule.maxCoinsPerDay - (today._sum.amount ?? 0);
+          if (left <= 0) return 0;
+          amount = Math.min(amount, left);
+        }
+      }
+      await tx.coinTransaction.create({ data: { userId, amount, reason, refKey } });
+      await tx.user.update({ where: { id: userId }, data: { coins: { increment: amount } } });
+      return amount;
+    });
   } catch (err) {
     // Unique (userId, refKey) → already rewarded for this exact task.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") return 0;

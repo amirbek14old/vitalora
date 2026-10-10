@@ -88,7 +88,7 @@ export default async function FitnessPage({ searchParams }: { searchParams: Prom
                     compact
                     exerciseSlugs={routineSlugs}
                     defaults={{ title: `${t.fitness.focusOptions[defaults.focus]} · ${routine.totalMinutes} ${t.common.minutes}`, durationMin: routine.totalMinutes }}
-                    labels={{ title: t.fitness.sessionTitle, duration: t.fitness.durationMin, effort: t.fitness.effort, notes: t.fitness.notes, submit: t.common.save, saving: t.common.saving }}
+                    labels={{ title: t.fitness.sessionTitle, duration: t.fitness.durationMin, effort: t.fitness.effort, notes: t.fitness.notes, submit: t.common.save, saving: t.common.saving, coinsHint: t.fitness.coinsHint }}
                   />
                 </div>
               </div>

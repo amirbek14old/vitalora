@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { FormMessage } from "@/components/form-message";
 import { initialState } from "@/lib/action-state";
 
-type Labels = { title: string; duration: string; effort: string; notes: string; submit: string; saving: string };
+type Labels = { title: string; duration: string; effort: string; notes: string; submit: string; saving: string; coinsHint?: string };
 
 export function LogWorkoutForm({ labels, defaults, exerciseSlugs = [], compact }: { labels: Labels; defaults?: { title?: string; durationMin?: number }; exerciseSlugs?: string[]; compact?: boolean }) {
   const [state, action] = useActionState(logWorkoutAction, initialState);
@@ -24,6 +24,7 @@ export function LogWorkoutForm({ labels, defaults, exerciseSlugs = [], compact }
         </Select>
       </Field>
       {!compact && <Field label={labels.notes} htmlFor="wk-notes"><Textarea id="wk-notes" name="notes" maxLength={500} /></Field>}
+      {labels.coinsHint && <p className="text-xs text-muted-foreground">🪙 {labels.coinsHint}</p>}
       <SubmitButton pendingText={labels.saving}>{labels.submit}</SubmitButton>
     </form>
   );
