@@ -72,12 +72,14 @@ export type Metrics = {
   torsoVertical: number | null;
   /** Body line shoulder–hip–ankle, only when hip and ankle are visible (side view). */
   bodyLine: number | null;
+  /** Clearly standing/squatting (push-up mode rejects these frames). */
+  standing: boolean;
 };
 
 const tiltFromVertical = (a: Landmark, b: Landmark) => (Math.atan2(Math.abs(b.x - a.x), Math.abs(b.y - a.y) || 1e-6) * 180) / Math.PI;
 const dist = (a: Landmark, b: Landmark) => Math.hypot(a.x - b.x, a.y - b.y);
 
-const HIDDEN: Metrics = { visible: false, elbow: 180, body: 180, knee: 180, torsoLean: 0, shinTilt: 0, bodyTilt: 90, shoulderY: 0, hipY: 0, upperArm: 0, thigh: 0, armHeight: 1, torsoVertical: null, bodyLine: null };
+const HIDDEN: Metrics = { visible: false, elbow: 180, body: 180, knee: 180, torsoLean: 0, shinTilt: 0, bodyTilt: 90, shoulderY: 0, hipY: 0, upperArm: 0, thigh: 0, armHeight: 1, torsoVertical: null, bodyLine: null, standing: false };
 
 export function metrics(lm: Landmark[], exercise: Exercise, minVisibility = 0.5): Metrics {
   if (exercise === "pushup") return pushupMetrics(lm, Math.min(minVisibility, 0.4));
@@ -103,31 +105,62 @@ export function metrics(lm: Landmark[], exercise: Exercise, minVisibility = 0.5)
   };
 }
 
-/** Push-up metrics need only shoulder, elbow and wrist — so it works with the phone in front of you or to the side. */
+/**
+ * Push-up metrics need only the shoulders and arms — so it works with the phone in front of you or to the side.
+ * Both arms are averaged when visible; if the hands are out of frame, the elbows are used instead.
+ * `handDrop` = how far the hands are below the shoulders (image units). The counter compares it with the
+ * value at the top of the push-up, so perspective and arm foreshortening don't matter.
+ */
 function pushupMetrics(lm: Landmark[], minVisibility: number): Metrics {
-  const p = side(lm, true);
-  if (![p.s, p.e, p.w].every((x) => x && vis(x) >= minVisibility)) return HIDDEN;
-  const upperArm = dist(p.s, p.e);
-  const arm = upperArm + dist(p.e, p.w);
-  if (arm < 0.02) return HIDDEN;
-  const ok = (l: Landmark | undefined) => !!l && vis(l) >= 0.5;
+  const sides = [
+    { s: lm[LM.L_SHOULDER], e: lm[LM.L_ELBOW], w: lm[LM.L_WRIST], h: lm[LM.L_HIP], k: lm[LM.L_KNEE], a: lm[LM.L_ANKLE] },
+    { s: lm[LM.R_SHOULDER], e: lm[LM.R_ELBOW], w: lm[LM.R_WRIST], h: lm[LM.R_HIP], k: lm[LM.R_KNEE], a: lm[LM.R_ANKLE] },
+  ];
+  const drops: number[] = [];
+  const shoulders: number[] = [];
+  let upperArm = 0;
+  let elbow = 180;
+  for (const p of sides) {
+    if (!p.s || vis(p.s) < minVisibility || !p.e || vis(p.e) < minVisibility) continue;
+    const ua = dist(p.s, p.e);
+    if (ua < 0.01) continue;
+    upperArm = Math.max(upperArm, ua);
+    shoulders.push(p.s.y);
+    if (p.w && vis(p.w) >= minVisibility && dist(p.e, p.w) > 0.01) {
+      drops.push(p.w.y - p.s.y);
+      elbow = Math.min(elbow, angle(p.s, p.e, p.w));
+    } else {
+      drops.push(2 * (p.e.y - p.s.y)); // hands out of frame: the elbow is about half-way down the arm
+    }
+  }
+  if (!drops.length) return HIDDEN;
+  const avg = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
+  const handDrop = avg(drops);
+
+  // Best-seen side for the optional body-line and "is the person standing?" checks.
+  const p = side(lm);
+  const ok = (l: Landmark | undefined, t = 0.6) => !!l && vis(l) >= t;
   const torso = ok(p.h) ? dist(p.s, p.h) : 0;
+  const torsoVertical = torso > 0.02 ? (p.h.y - p.s.y) / torso : null;
+  // Clearly standing or squatting: upright torso with knees visible well below the hips.
+  const standing = torsoVertical != null && torsoVertical > 0.7 && ok(p.k) && p.k.y - p.h.y > 0.5 * torso;
   return {
     ...HIDDEN,
     visible: true,
-    elbow: angle(p.s, p.e, p.w),
-    shoulderY: p.s.y,
+    elbow,
+    shoulderY: avg(shoulders),
     upperArm,
-    armHeight: (p.w.y - p.s.y) / arm,
-    torsoVertical: torso > 0.02 ? (p.h.y - p.s.y) / torso : null,
-    bodyLine: ok(p.h) && ok(p.a) ? angle(p.s, p.h, p.a) : null,
+    armHeight: handDrop, // raw; normalised by the counter
+    torsoVertical,
+    standing,
+    bodyLine: ok(p.h, 0.5) && ok(p.a, 0.5) ? angle(p.s, p.h, p.a) : null,
   };
 }
 
 /** Is the body in the right position for the chosen exercise? (Stops squats counting as push-ups and vice versa.) */
 export function postureOk(m: Metrics, exercise: Exercise): boolean {
-  // Push-up: hands below the shoulders, and the torso not upright (standing/squatting people are rejected).
-  if (exercise === "pushup") return m.armHeight > 0.05 && (m.torsoVertical == null || m.torsoVertical < 0.55);
+  // Push-up: hands below the shoulders and not clearly standing.
+  if (exercise === "pushup") return m.armHeight > 0.01 && !m.standing;
   return m.shinTilt < 55 && m.bodyTilt > 45; // standing / squatting upright
 }
 
@@ -148,7 +181,7 @@ const MIN_TRAVEL = { pushup: 0.25, squat: 0.3 };
 
 const CFG = {
   // Push-up thresholds are on armHeight (shoulder height above the hands ÷ arm length), not on an angle.
-  pushup: { down: 0.72, up: 0.86, goodDepth: 0.62, lockout: 0.9, bodyMin: 160, bodyWarn: 150 },
+  pushup: { down: 0.75, up: 0.9, goodDepth: 0.65, lockout: 0.93, bodyMin: 160, bodyWarn: 150 },
   squat: { down: 100, up: 160, goodDepth: 110, lockout: 165, leanMax: 50 },
 };
 
@@ -167,12 +200,16 @@ export class RepCounter {
   private minY = Infinity; // shoulder (push-up) or hip (squat) height range during the rep
   private maxY = -Infinity;
   private segment = 0; // upper arm (push-up) or thigh (squat) length, to normalise the movement
+  private topRef = 0; // push-ups: hands-below-shoulders distance with straight arms (auto-calibrated)
+  /** Live numbers for the on-screen debug readout (?debug=1). */
+  debug: { value: number; ref: number; visible: boolean; posture: boolean } = { value: 0, ref: 0, visible: false, posture: false };
 
   constructor(public readonly exercise: Exercise, private readonly alpha = 0.5) {}
 
   update(lm: Landmark[] | undefined, timeMs: number): CounterState {
     if (!lm || lm.length < 29) return this.set("notVisible");
     const m = metrics(lm, this.exercise);
+    this.debug = { value: this.smooth ?? 0, ref: this.topRef, visible: m.visible, posture: m.visible && postureOk(m, this.exercise) };
     if (!m.visible) return this.set("notVisible");
     if (!postureOk(m, this.exercise)) {
       // Wrong position for this exercise: drop any rep in progress and tell the user how to get into position.
@@ -181,7 +218,12 @@ export class RepCounter {
       return this.set(this.exercise === "pushup" ? "getIntoPlank" : "standUp");
     }
 
-    const raw = this.exercise === "pushup" ? m.armHeight : m.knee;
+    let raw = m.knee;
+    if (this.exercise === "pushup") {
+      // Calibrate on the highest position seen (straight arms). Slowly forget, so moving closer/further from the camera is fine.
+      this.topRef = Math.max(m.armHeight, this.topRef * 0.997);
+      raw = m.armHeight / this.topRef; // 1 at the top, ~0.4–0.6 at the bottom
+    }
     this.smooth = this.smooth == null ? raw : this.alpha * raw + (1 - this.alpha) * this.smooth;
     const a = this.smooth;
     const cfg = CFG[this.exercise];

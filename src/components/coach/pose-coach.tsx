@@ -39,6 +39,9 @@ export function PoseCoach({ labels, aiEnabled, speechLang }: { labels: Labels; a
   const [sound, setSound] = useState(true);
   const [saved, setSaved] = useState<{ coins: number } | null>(null);
   const [ai, setAi] = useState<{ status: "idle" | "loading" | "done" | "error"; text?: string }>({ status: "idle" });
+  const [meter, setMeter] = useState<RepCounter["debug"] | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+  useEffect(() => setShowDebug(new URLSearchParams(window.location.search).has("debug")), []);
 
   const speak = useCallback(
     (text: string) => {
@@ -156,6 +159,7 @@ export function PoseCoach({ labels, aiEnabled, speechLang }: { labels: Labels; a
           if (now - lastUi > 150) {
             lastUi = now;
             setState({ ...s, scores: [...s.scores] });
+            setMeter({ ...counterRef.current.debug });
             setElapsed(Math.round((now - startRef.current) / 1000));
           }
         }
@@ -259,7 +263,19 @@ export function PoseCoach({ labels, aiEnabled, speechLang }: { labels: Labels; a
             <div className="absolute right-3 top-3 rounded-xl bg-black/60 px-3 py-1.5 text-right text-xs text-white">
               <p>{labels.goodReps}: <strong>{state.goodReps}</strong></p>
               <p>{labels.time}: {elapsed}s</p>
+              {showDebug && meter && (
+                <p className="mt-1 font-mono text-[10px] opacity-90">
+                  v={meter.value.toFixed(2)} ref={meter.ref.toFixed(3)} vis={meter.visible ? 1 : 0} pos={meter.posture ? 1 : 0} {state.phase}
+                </p>
+              )}
             </div>
+            {exercise === "pushup" && meter && meter.ref > 0 && (
+              // Depth meter: fills as the shoulders go down; the line marks where a rep counts.
+              <div className="absolute bottom-20 right-3 top-20 w-3 overflow-hidden rounded-full bg-white/25" aria-hidden>
+                <div className="absolute inset-x-0 bottom-0 bg-emerald-400 transition-[height] duration-150" style={{ height: `${Math.round(Math.min(1, Math.max(0, (1 - meter.value) / 0.5)) * 100)}%` }} />
+                <div className="absolute inset-x-0 h-0.5 bg-white" style={{ bottom: `${Math.round(((1 - 0.75) / 0.5) * 100)}%` }} />
+              </div>
+            )}
             <div
               className={cn(
                 "absolute inset-x-3 bottom-3 rounded-xl px-4 py-3 text-center text-base font-semibold text-white",

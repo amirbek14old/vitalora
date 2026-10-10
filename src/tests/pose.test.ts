@@ -52,7 +52,7 @@ describe("geometry", () => {
     const m = metrics(pushupPose(90), "pushup");
     expect(Math.round(m.elbow)).toBe(90);
     expect(Math.round(m.body)).toBe(180);
-    expect(m.armHeight).toBeCloseTo(0.5, 2); // shoulder at elbow height = half the arm
+    expect(m.armHeight).toBeCloseTo(0.12, 2); // hands are one forearm below the shoulder at 90°
     expect(Math.round(m.bodyLine ?? 0)).toBe(180);
   });
 
@@ -129,6 +129,30 @@ describe("push-up camera angles", () => {
     const s = run(new RepCounter("pushup"), [...rep, ...rep, ...rep]);
     expect(s.reps).toBe(3);
     expect(s.goodReps).toBe(3);
+  });
+
+  it("counts push-ups with elbows tucked back (upper arm foreshortened in a front view)", () => {
+    // Only the height of the shoulders above the hands changes; arm length on screen shrinks at the bottom.
+    const pose = (drop: number) => {
+      const lm = frontPose(1);
+      for (const [s, e, w] of [[LM.L_SHOULDER, LM.L_ELBOW, LM.L_WRIST], [LM.R_SHOULDER, LM.R_ELBOW, LM.R_WRIST]] as const) {
+        lm[s] = { ...lm[s], y: lm[w].y - drop };
+        lm[e] = { ...lm[e], x: lm[w].x, y: lm[w].y - Math.min(drop, 0.15) + 0.02 };
+      }
+      return lm;
+    };
+    const rep = [...sweep(0.3, 0.16, 12), ...sweep(0.16, 0.3, 12)].map(pose);
+    expect(run(new RepCounter("pushup"), [...rep, ...rep]).reps).toBe(2);
+  });
+
+  it("still counts when the hands are out of the frame (uses the elbows)", () => {
+    const rep = [...sweep(0.97, 0.45, 12), ...sweep(0.45, 0.97, 12)].map((h) => {
+      const lm = frontPose(h);
+      lm[LM.L_WRIST] = { ...lm[LM.L_WRIST], visibility: 0.05 };
+      lm[LM.R_WRIST] = { ...lm[LM.R_WRIST], visibility: 0.05 };
+      return lm;
+    });
+    expect(run(new RepCounter("pushup"), [...rep, ...rep]).reps).toBe(2);
   });
 
   it("counts reasonably deep push-ups (elbows ~100°) as reps", () => {
