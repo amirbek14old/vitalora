@@ -31,6 +31,7 @@ export async function POST(req: Request) {
     update: { mime, data: Buffer.from(bytes) },
     create: { userId: user.id, mime, data: Buffer.from(bytes) },
   });
+  await db.profile.updateMany({ where: { userId: user.id }, data: { avatarPreset: null } });
   await audit("profile.avatar_upload", user.id);
   revalidatePath("/", "layout");
   return NextResponse.json({ ok: true });

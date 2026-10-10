@@ -6,7 +6,7 @@ import type { AvatarUser } from "@/components/user-avatar";
 export const publicUserSelect = {
   id: true,
   proUntil: true,
-  profile: { select: { displayName: true, bio: true, equippedFrame: true, equippedBanner: true, equippedNameColor: true, equippedBadge: true } },
+  profile: { select: { displayName: true, bio: true, avatarPreset: true, equippedFrame: true, equippedBanner: true, equippedNameColor: true, equippedBadge: true } },
   preference: { select: { communityVisible: true } },
   avatar: { select: { updatedAt: true } },
 } satisfies Prisma.UserSelect;
@@ -21,6 +21,7 @@ export function toAvatarUser(u: PublicUser, viewerId: string, fallbackName: stri
     displayName: visible ? u.profile?.displayName ?? fallbackName : fallbackName,
     avatarVersion: visible && u.avatar ? u.avatar.updatedAt.getTime() : null,
     frame: visible ? u.profile?.equippedFrame ?? null : null,
+    preset: visible ? u.profile?.avatarPreset ?? null : null,
     nameColor: visible ? u.profile?.equippedNameColor ?? null : null,
     badge: visible ? u.profile?.equippedBadge ?? null : null,
     pro: visible && !!u.proUntil && u.proUntil > new Date(),

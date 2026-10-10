@@ -27,7 +27,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     <div className="space-y-6">
       <ProfileHeader
         data={{
-          id: u.id, displayName: u.profile.displayName, bio: u.profile.bio, avatarVersion: u.avatar?.updatedAt.getTime() ?? null,
+          id: u.id, displayName: u.profile.displayName, bio: u.profile.bio, avatarVersion: u.avatar?.updatedAt.getTime() ?? null, preset: u.profile.avatarPreset,
           frame: u.profile.equippedFrame, banner: u.profile.equippedBanner, nameColor: u.profile.equippedNameColor, badge: u.profile.equippedBadge,
           pro: !!u.proUntil && u.proUntil > new Date(),
         }}

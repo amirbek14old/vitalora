@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Award, BookOpen, Bot, Camera, ChefHat, Dumbbell, HelpCircle, History, LayoutDashboard, ListChecks, Moon, Salad, Settings, Shield, ShoppingBag, User, Users, Video,
+  Award, BookOpen, Bot, Camera, ChefHat, Dumbbell, HelpCircle, History, LayoutDashboard, ListChecks, Moon, Salad, Settings, Shield, ShoppingBag, User, Users, Video, Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const icons = {
   dashboard: LayoutDashboard, fitness: Dumbbell, history: History, nutrition: Salad, recipes: ChefHat, foodScan: Camera, sleep: Moon,
-  habits: ListChecks, assistant: Bot, coach: Video, shop: ShoppingBag, academy: BookOpen, community: Users, achievements: Award, profile: User, settings: Settings, help: HelpCircle, admin: Shield,
+  habits: ListChecks, assistant: Bot, coach: Video, shop: ShoppingBag, pro: Crown, academy: BookOpen, community: Users, achievements: Award, profile: User, settings: Settings, help: HelpCircle, admin: Shield,
 } as const;
 
 export type NavItem = { key: keyof typeof icons; href: string; label: string };

@@ -6,6 +6,7 @@ export type ProfileHeaderData = {
   displayName: string;
   bio?: string | null;
   avatarVersion: number | null;
+  preset?: string | null;
   frame: string | null;
   banner: string | null;
   nameColor: string | null;

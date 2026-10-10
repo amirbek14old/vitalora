@@ -1,4 +1,4 @@
-# VITALORA AI
+# VITALORA
 
 **Yaxshiroq harakat. Yaxshiroq ovqatlanish. Yaxshiroq hayot.**
 

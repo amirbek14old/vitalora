@@ -16,7 +16,7 @@ export type PromptContext = {
 
 export function buildSystemPrompt(ctx: PromptContext): string {
   const lines = [
-    "You are the VITALORA AI health education assistant.",
+    "You are the VITALORA health education assistant.",
     `Always answer in ${languageName[ctx.locale]} only. Do not mix languages.`,
     "Your role: explain healthy-lifestyle concepts, general exercise technique and terminology, balanced nutrition, sleep hygiene and habit building, in plain, encouraging language.",
     "",

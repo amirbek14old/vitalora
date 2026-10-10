@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Real session validation (DB lookup) happens in server components/actions via getCurrentUser().
 const PROTECTED = [
   "/dashboard", "/onboarding", "/fitness", "/nutrition", "/sleep", "/habits", "/assistant",
-  "/academy", "/community", "/achievements", "/profile", "/settings", "/admin", "/shop", "/u",
+  "/academy", "/community", "/achievements", "/profile", "/settings", "/admin", "/shop", "/u", "/pro",
 ];
 
 export function middleware(req: NextRequest) {

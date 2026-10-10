@@ -5,7 +5,7 @@ export function SiteFooter({ t }: { t: Dictionary }) {
   return (
     <footer className="border-t border-slate-200 py-8 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 sm:flex-row sm:items-center sm:justify-between">
-        <p>© {new Date().getFullYear()} VITALORA AI · {t.common.slogan}</p>
+        <p>© {new Date().getFullYear()} VITALORA · {t.common.slogan}</p>
         <nav aria-label="Footer" className="flex flex-wrap gap-4">
           <Link href="/about" className="hover:underline">{t.nav.about}</Link>
           <Link href="/features" className="hover:underline">{t.nav.features}</Link>

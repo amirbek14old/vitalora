@@ -1,7 +1,7 @@
 "use client";
 import { useActionState } from "react";
 import { createRecipeAction } from "@/app/actions/admin";
-import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { Field, Input, Textarea } from "@/components/ui/form";
 import { SubmitButton } from "@/components/submit-button";
 import { FormMessage } from "@/components/form-message";
 import { initialState } from "@/lib/action-state";
@@ -27,7 +27,6 @@ export function RecipeForm({ labels, f }: { labels: { submit: string; hint: stri
         ))}
       </div>
       <div className="grid gap-4 sm:grid-cols-4">
-        <Field label={f.cuisine} htmlFor="cuisine"><Select id="cuisine" name="cuisine"><option value="uzbek">uzbek</option><option value="international">international</option></Select></Field>
         <Field label={f.prep} htmlFor="prepMin"><Input id="prepMin" name="prepMin" type="number" min={1} max={600} required defaultValue={30} /></Field>
         <Field label={f.servings} htmlFor="servings"><Input id="servings" name="servings" type="number" min={1} max={50} required defaultValue={4} /></Field>
         <Field label={f.foodGroups} htmlFor="foodGroups"><Textarea id="foodGroups" name="foodGroups" className="min-h-11" placeholder="vegetables&#10;grains" /></Field>

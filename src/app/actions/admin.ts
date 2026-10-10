@@ -89,7 +89,7 @@ export async function createRecipeAction(_prev: ActionState, formData: FormData)
   const { t } = await getI18n();
   const title = localized.safeParse({ uz: text(formData.get("title_uz")), en: text(formData.get("title_en")), ru: text(formData.get("title_ru")) });
   if (!title.success) return { error: t.common.errorGeneric };
-  const cuisine = formData.get("cuisine") === "uzbek" ? "uzbek" : "international";
+  const cuisine = "international";
   const prepMin = Number(formData.get("prepMin"));
   const servings = Number(formData.get("servings"));
   if (!Number.isInteger(prepMin) || prepMin < 1 || prepMin > 600 || !Number.isInteger(servings) || servings < 1 || servings > 50) return { error: t.common.errorGeneric };

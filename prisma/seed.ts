@@ -58,8 +58,9 @@ async function main() {
   }
   console.log(`✓ ${communities.length} communities`);
 
-  for (const item of shopItems) {
-    const data = { ...item, proOnly: item.proOnly ?? false };
+  for (const [i, item] of shopItems.entries()) {
+    // Order in the shop follows the order in seed-data/shop.ts.
+    const data = { ...item, sortOrder: i, proOnly: item.proOnly ?? false, active: item.active ?? true };
     await db.shopItem.upsert({ where: { code: item.code }, update: data, create: data });
   }
   console.log(`✓ ${shopItems.length} shop items`);

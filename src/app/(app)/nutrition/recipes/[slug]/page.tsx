@@ -26,8 +26,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
     <article className="space-y-6">
       <Link href="/nutrition/recipes" className="inline-flex items-center gap-1 text-sm text-slate-600 hover:underline dark:text-slate-300"><ArrowLeft className="h-4 w-4" aria-hidden />{t.common.back}</Link>
       <div>
-        <Badge>{r.cuisine === "uzbek" ? t.recipes.uzbek : t.recipes.international}</Badge>
-        <h1 className="mt-3 text-3xl font-bold">{tr(r.title, locale)}</h1>
+        <h1 className="text-3xl font-bold">{tr(r.title, locale)}</h1>
         <p className="mt-2 max-w-2xl text-slate-600 dark:text-slate-300">{tr(r.description, locale)}</p>
         <p className="mt-2 text-sm text-slate-500">{t.recipes.prep}: {r.prepMin} {t.common.minutes} · {t.recipes.servings}: {r.servings}</p>
       </div>

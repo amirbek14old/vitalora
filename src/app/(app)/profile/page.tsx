@@ -13,6 +13,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
+import { AvatarPicker } from "@/components/profile/avatar-picker";
 
 export async function generateMetadata() {
   const { t } = await getI18n();
@@ -33,7 +34,7 @@ export default async function ProfilePage() {
     <div className="space-y-6">
       <ProfileHeader
         data={{
-          id: user.id, displayName: p.displayName, bio: p.bio, avatarVersion: avatar?.updatedAt.getTime() ?? null,
+          id: user.id, displayName: p.displayName, bio: p.bio, avatarVersion: avatar?.updatedAt.getTime() ?? null, preset: p.avatarPreset,
           frame: p.equippedFrame, banner: p.equippedBanner, nameColor: p.equippedNameColor, badge: p.equippedBadge, pro: isPro(user),
         }}
         stats={[
@@ -58,6 +59,13 @@ export default async function ProfilePage() {
               hasPhoto={!!avatar}
               labels={{ upload: t.profile.uploadPhoto, change: t.profile.changePhoto, remove: t.profile.removePhoto, hint: t.profile.photoHint, error: t.common.errorGeneric, tooLarge: t.foodScan.tooLarge }}
             />
+            <div className="mt-6">
+              <AvatarPicker
+                current={avatar ? null : p.avatarPreset}
+                pro={isPro(user)}
+                labels={{ title: t.profile.pickPicture, hint: t.profile.pickHint, proOnly: t.profile.proOnly, groups: t.profile.pictureGroups }}
+              />
+            </div>
           </div>
           <div className="border-t border-slate-200 pt-6 dark:border-slate-700">
             <ProfileForm profile={p} t={{ profile: t.profile, common: t.common, onboarding: t.onboarding }} />

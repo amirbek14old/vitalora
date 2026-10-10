@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 type Labels = { buy: string; owned: string; equip: string; equipped: string; unequip: string; proOnly: string };
 
 export function ShopItemCard({
-  code, kind, name, price, proOnly, owned, equipped, canBuy, preview, labels,
+  code, kind, name, price, fullPrice, proOnly, owned, equipped, canBuy, preview, labels,
 }: {
-  code: string; kind: string; name: string; price: number; proOnly: boolean; owned: boolean; equipped: boolean; canBuy: boolean;
+  code: string; kind: string; name: string; price: number; fullPrice?: number; proOnly: boolean; owned: boolean; equipped: boolean; canBuy: boolean;
   preview: React.ReactNode; labels: Labels;
 }) {
   const [buyState, buy] = useActionState(buyItemAction, initialState);
@@ -35,7 +35,9 @@ export function ShopItemCard({
           <form action={buy}>
             <input type="hidden" name="code" value={code} />
             <SubmitButton size="sm" className="w-full" variant={canBuy ? "primary" : "outline"}>
-              <Coins className="h-4 w-4" aria-hidden />{price} · {labels.buy}
+              <Coins className="h-4 w-4" aria-hidden />
+              {fullPrice && fullPrice > price && <s className="opacity-60">{fullPrice}</s>}
+              {price} · {labels.buy}
             </SubmitButton>
           </form>
         )}
@@ -46,11 +48,11 @@ export function ShopItemCard({
   );
 }
 
-export function BuyProButton({ price, label, disabledLabel, canBuy }: { price: number; label: string; disabledLabel?: string; canBuy: boolean }) {
+export function BuyProButton({ code, price, label, disabledLabel, canBuy }: { code: string; price: number; label: string; disabledLabel?: string; canBuy: boolean }) {
   const [state, buy] = useActionState(buyItemAction, initialState);
   return (
     <form action={buy} className="space-y-2">
-      <input type="hidden" name="code" value="pro_pass_30" />
+      <input type="hidden" name="code" value={code} />
       <SubmitButton size="lg" variant={canBuy ? "primary" : "outline"} className="w-full sm:w-auto">
         <Coins className="h-4 w-4" aria-hidden />{label.replace("{price}", String(price))}
       </SubmitButton>

@@ -26,6 +26,7 @@ export function AppShell({ t, locale, theme, role, coins, me, children }: { t: D
     { key: "community", href: "/community", label: t.nav.community },
     { key: "achievements", href: "/achievements", label: t.nav.achievements },
     { key: "shop", href: "/shop", label: t.nav.shop },
+    { key: "pro", href: "/pro", label: t.nav.pro },
     { key: "profile", href: "/profile", label: t.nav.profile },
     { key: "settings", href: "/settings", label: t.nav.settings },
     { key: "help", href: "/help", label: t.nav.help },

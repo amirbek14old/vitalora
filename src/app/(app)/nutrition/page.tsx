@@ -77,8 +77,7 @@ export default async function NutritionPage() {
           {recipes.map((r) => (
             <Link key={r.id} href={`/nutrition/recipes/${r.slug}`}>
               <Card className="h-full hover:shadow-md">
-                <p className="text-xs uppercase tracking-wide text-brand-700 dark:text-brand-400">{r.cuisine === "uzbek" ? t.recipes.uzbek : t.recipes.international}</p>
-                <h3 className="mt-1 font-semibold">{tr(r.title, locale)}</h3>
+                <h3 className="font-semibold">{tr(r.title, locale)}</h3>
                 <p className="mt-1 text-xs text-slate-500">{r.prepMin} {t.common.minutes}</p>
               </Card>
             </Link>

@@ -9,7 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { t, locale } = await getI18n();
   const theme = await getTheme();
   const avatar = await db.avatar.findUnique({ where: { userId: user.id }, select: { updatedAt: true } });
-  const me = { id: user.id, displayName: user.profile?.displayName ?? "", avatarVersion: avatar?.updatedAt.getTime() ?? null, frame: user.profile?.equippedFrame ?? null };
+  const me = { id: user.id, displayName: user.profile?.displayName ?? "", avatarVersion: avatar?.updatedAt.getTime() ?? null, frame: user.profile?.equippedFrame ?? null, preset: user.profile?.avatarPreset ?? null };
   return (
     <AppShell t={t} locale={locale} theme={theme} role={user.role} coins={user.coins} me={me}>
       {children}

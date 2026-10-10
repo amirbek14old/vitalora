@@ -101,3 +101,45 @@ npm run db:seed              # doʻkon buyumlari
 | Unit | 54 ta (shu jumladan 8 ta poza tahlili testi) |
 | Integratsiya | 7 ta tanga testi; `DATABASE_URL` kerak |
 | E2E (Playwright) | 13 ta: auth va `next`, tanga va doʻkon, avatar yuklash, AI murabbiy sahifasi, mobil tab-panel |
+
+## Yangilanish (2026-yil 10-oktabr)
+
+### Brend
+- Logotip va sarlavhalarda endi faqat **VITALORA** yoziladi ("AI" olib tashlandi).
+- Retseptlardagi "Oʻzbek oshxonasi" boʻlimi va filtri olib tashlandi.
+
+### Profil rasmi
+- Oʻz suratini yuklash mumkin yoki **40 ta tayyor rasm**dan birini tanlash mumkin: sport, tabiat, hayvonlar, qiziqarli. 6 tasi faqat Pro uchun.
+- Tayyor rasmlar `src/lib/avatars.ts` faylida, kalit `Profile.avatarPreset` maydonida saqlanadi.
+
+### Doʻkon
+- **63 ta buyum**: ramkalar (3 tasi aylanadigan), bannerlar, ism ranglari, nishonlar.
+
+### Pro
+- **$5 → 14 kun**. Toʻlov Payme yoki Click orqali, sahifa `/pro`.
+- **500 tanga → 3 kun**. Doʻkonda sotib olinadi.
+- Pro imkoniyatlari:
+  - barcha vazifalar uchun ×2 tanga;
+  - har kuni +25 tanga;
+  - doʻkonda 20% chegirma;
+  - maxsus bezaklar va rasmlar;
+  - AI limitlari ×2;
+  - PRO belgisi.
+- Toʻlov faqat kattalar akkaunti uchun mumkin.
+
+### Toʻlovni ulash
+`.env` faylida va Vercel → Environment Variables boʻlimida quyidagi qiymatlar toʻldiriladi:
+
+| Toʻlov tizimi | Oʻzgaruvchilar |
+|---|---|
+| Payme | `PAYME_MERCHANT_ID`, `PAYME_KEY`, `PAYME_TEST` |
+| Click | `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_SECRET_KEY` |
+| Umumiy | `PRO_PRICE_UZS`, `APP_URL` |
+
+Toʻlov tizimlari kabinetida koʻrsatiladigan manzillar:
+
+| Toʻlov tizimi | Manzil |
+|---|---|
+| Payme | `https://<sayt>/api/payments/payme` |
+| Click — Prepare | `https://<sayt>/api/payments/click/prepare` |
+| Click — Complete | `https://<sayt>/api/payments/click/complete` |

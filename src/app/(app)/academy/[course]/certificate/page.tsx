@@ -26,7 +26,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ co
     <div className="space-y-4">
       <div className="no-print flex justify-end"><PrintButton label={t.academy.print} /></div>
       <section className="mx-auto max-w-3xl rounded-3xl border-8 border-double border-brand-700 bg-white p-10 text-center text-slate-900 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">VITALORA AI</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">VITALORA</p>
         <h1 className="mt-4 text-3xl font-bold">{t.academy.certificateTitle}</h1>
         <p className="mt-6 text-slate-600">
           {before}

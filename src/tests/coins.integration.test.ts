@@ -23,7 +23,7 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
     userId = u.id;
     await db.shopItem.upsert({ where: { code: "frame_teal" }, update: {}, create: { code: "frame_teal", kind: "FRAME", name: { en: "Teal" }, price: 60, style: "teal" } });
     await db.shopItem.upsert({ where: { code: "frame_gold" }, update: {}, create: { code: "frame_gold", kind: "FRAME", name: { en: "Gold" }, price: 300, proOnly: true, style: "gold" } });
-    await db.shopItem.upsert({ where: { code: "pro_pass_30" }, update: {}, create: { code: "pro_pass_30", kind: "PRO_PASS", name: { en: "Pro" }, price: 500, style: "pro" } });
+    await db.shopItem.upsert({ where: { code: "pro_pass_3d" }, update: {}, create: { code: "pro_pass_3d", kind: "PRO_PASS", name: { en: "Pro" }, price: 500, style: "pro" } });
   });
 
   afterAll(async () => {
@@ -60,20 +60,27 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
   it("buys items atomically and refuses when coins are insufficient", async () => {
     const before = await balance(); // 2 + 5 + 6 + 50 = 63
     expect(before).toBe(63);
-    expect(await purchaseItem(userId, "frame_teal")).toEqual({ ok: true });
+    expect(await purchaseItem(userId, "frame_teal")).toEqual({ ok: true, price: 60 });
     expect(await balance()).toBe(3);
     expect(await purchaseItem(userId, "frame_teal")).toEqual({ ok: false, error: "owned" });
-    expect(await purchaseItem(userId, "pro_pass_30")).toEqual({ ok: false, error: "insufficient" });
+    expect(await purchaseItem(userId, "pro_pass_3d")).toEqual({ ok: false, error: "insufficient" });
     expect(await balance()).toBe(3);
   });
 
-  it("requires Pro for Pro-only items and grants Pro with a pass", async () => {
+  it("requires Pro for Pro-only items; 500 coins give 3 days of Pro; Pro gets 20% off", async () => {
     expect(await purchaseItem(userId, "frame_gold")).toEqual({ ok: false, error: "need_pro" });
     await db.user.update({ where: { id: userId }, data: { coins: { increment: 1000 } } });
-    expect(await purchaseItem(userId, "pro_pass_30")).toEqual({ ok: true });
+    expect(await purchaseItem(userId, "pro_pass_3d")).toEqual({ ok: true, price: 500 });
     const u = await db.user.findUniqueOrThrow({ where: { id: userId } });
-    expect(u.proUntil!.getTime()).toBeGreaterThan(Date.now() + 29 * 86_400_000);
-    expect(await purchaseItem(userId, "frame_gold")).toEqual({ ok: true });
+    expect(u.proUntil!.getTime()).toBeGreaterThan(Date.now() + 2.9 * 86_400_000);
+    expect(u.proUntil!.getTime()).toBeLessThan(Date.now() + 3.1 * 86_400_000);
+    expect(await purchaseItem(userId, "frame_gold")).toEqual({ ok: true, price: 240 }); // 300 − 20%
+  });
+
+  it("gives Pro members double coins (daily bonus is not doubled)", async () => {
+    expect(await awardCoins(userId, "lesson", "lesson:pro-test")).toBe(30);
+    expect(await awardCoins(userId, "pro_daily", "pro_daily:test")).toBe(25);
+    expect(await awardCoins(userId, "pro_daily", "pro_daily:test2")).toBe(0); // once a day
   });
 
   it("only equips owned items", async () => {
@@ -84,7 +91,7 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
   });
 
   it("never lets the balance go negative under concurrent purchases", async () => {
-    await db.user.update({ where: { id: userId }, data: { coins: 300 } });
+    await db.user.update({ where: { id: userId }, data: { coins: 300, proUntil: null } });
     await db.userItem.deleteMany({ where: { userId, item: { code: "frame_teal" } } });
     await db.shopItem.upsert({ where: { code: "frame_mint" }, update: {}, create: { code: "frame_mint", kind: "FRAME", name: { en: "Mint" }, price: 200, style: "mint" } });
     // 300 coins, two 200-coin purchases at once → exactly one succeeds

@@ -7,9 +7,9 @@ import { HydrationMarker } from "@/components/hydration-marker";
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return {
-    title: { default: t.meta.title, template: "%s · VITALORA AI" },
+    title: { default: t.meta.title, template: "%s · VITALORA" },
     description: t.meta.description,
-    applicationName: "VITALORA AI",
+    applicationName: "VITALORA",
     appleWebApp: { capable: true, title: "VITALORA", statusBarStyle: "default" },
     icons: { apple: "/icons/apple-touch-icon.png" },
     formatDetection: { telephone: false },

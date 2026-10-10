@@ -5,6 +5,8 @@ import { getI18n } from "@/lib/i18n/server";
 import { fmt, tr } from "@/lib/i18n/config";
 import { formatDate } from "@/lib/i18n/format";
 import { isPro, REWARDS } from "@/lib/coins";
+import { PRO_COIN_PASS_CODE, PRO_PRICE_USD, shopPrice } from "@/lib/coin-rules";
+import { ButtonLink } from "@/components/ui/button";
 import { BANNERS, styleFromCode } from "@/lib/cosmetics";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -30,9 +32,9 @@ export default async function ShopPage() {
   ]);
   const ownedIds = new Set(owned.map((o) => o.itemId));
   const pro = isPro(user);
-  const proItem = items.find((i) => i.kind === "PRO_PASS");
+  const proItem = items.find((i) => i.code === PRO_COIN_PASS_CODE);
   const profile = user.profile!;
-  const me = { id: user.id, displayName: profile.displayName, avatarVersion: avatar?.updatedAt.getTime() ?? null };
+  const me = { id: user.id, displayName: profile.displayName, avatarVersion: avatar?.updatedAt.getTime() ?? null, preset: profile.avatarPreset };
   const labels = { buy: t.shop.buy, owned: t.shop.owned, equip: t.shop.equip, equipped: t.shop.equipped, unequip: t.shop.unequip, proOnly: t.shop.proOnly };
   const earnRows = (Object.keys(REWARDS) as (keyof typeof REWARDS)[]).map((k) => ({ key: k, text: t.coins.rules[k] }));
 
@@ -48,17 +50,18 @@ export default async function ShopPage() {
             <p className="text-3xl font-bold">{user.coins}</p>
           </div>
         </Card>
-        {proItem && (
-          <div className="rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-5 text-white shadow-sm lg:col-span-2">
-            <p className="flex items-center gap-2 text-lg font-bold"><Crown className="h-5 w-5" aria-hidden />{t.shop.proTitle}</p>
-            <p className="mt-1 text-sm opacity-95">{t.shop.proText}</p>
-            <ul className="mt-3 grid gap-1 text-sm sm:grid-cols-2">{t.shop.proPerks.map((p) => <li key={p}>✓ {p}</li>)}</ul>
-            <div className="mt-4">
-              {pro && <p className="mb-2 text-sm font-semibold">{fmt(t.shop.proActiveUntil, { date: formatDate(user.proUntil!, locale) })}</p>}
-              <BuyProButton price={proItem.price} label={pro ? t.shop.extendPro : t.shop.buyPro} canBuy={user.coins >= proItem.price} disabledLabel={fmt(t.shop.needMore, { n: proItem.price - user.coins })} />
-            </div>
+        <div className="rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-5 text-white shadow-sm lg:col-span-2">
+          <p className="flex items-center gap-2 text-lg font-bold"><Crown className="h-5 w-5" aria-hidden />{t.shop.proTitle}</p>
+          <p className="mt-1 text-sm opacity-95">{t.shop.proText}</p>
+          <ul className="mt-3 grid gap-1 text-sm sm:grid-cols-2">{t.pro.perks.map((p) => <li key={p.title}>✓ {p.title}</li>)}</ul>
+          {pro && <p className="mt-3 text-sm font-semibold">{fmt(t.shop.proActiveUntil, { date: formatDate(user.proUntil!, locale) })}</p>}
+          <div className="mt-4 flex flex-wrap items-start gap-3">
+            <ButtonLink href="/pro" size="lg" className="bg-white text-orange-700 hover:bg-orange-50">{fmt(t.pro.payCta, { usd: PRO_PRICE_USD })}</ButtonLink>
+            {proItem && (
+              <BuyProButton code={proItem.code} price={proItem.price} label={t.shop.buyPro} canBuy={user.coins >= proItem.price} disabledLabel={fmt(t.shop.needMore, { n: proItem.price - user.coins })} />
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {KINDS.map((kind) => {
@@ -82,11 +85,12 @@ export default async function ShopPage() {
                     code={item.code}
                     kind={kind}
                     name={tr(item.name, locale)}
-                    price={item.price}
+                    price={shopPrice(item.price, pro)}
+                    fullPrice={item.price}
                     proOnly={item.proOnly}
                     owned={isOwned}
                     equipped={equipped}
-                    canBuy={user.coins >= item.price && (!item.proOnly || pro)}
+                    canBuy={user.coins >= shopPrice(item.price, pro) && (!item.proOnly || pro)}
                     preview={preview}
                     labels={labels}
                   />

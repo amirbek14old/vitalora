@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 /** Installable web app ("Add to Home Screen") on Android and iOS. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "VITALORA AI",
+    name: "VITALORA",
     short_name: "VITALORA",
     description: "Move Better. Eat Better. Live Better.",
     start_url: "/dashboard",

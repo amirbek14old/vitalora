@@ -85,6 +85,7 @@ model User {
   items            UserItem[]
   coinTransactions CoinTransaction[]
   formSessions     FormCheckSession[]
+  payments         Payment[]
 }
 
 model Session {
@@ -116,6 +117,7 @@ model Profile {
   equippedBanner    String?
   equippedNameColor String?
   equippedBadge     String?
+  avatarPreset      String? // ready-made picture key (src/lib/avatars.ts)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 }
@@ -543,5 +545,39 @@ model FormCheckSession {
   durationSec Int
   createdAt   DateTime @default(now())
 
+  @@index([userId, createdAt])
+}
+
+enum PaymentProvider {
+  PAYME
+  CLICK
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+/// A paid order (Pro pass). Our id is the order id sent to Payme/Click.
+model Payment {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider       PaymentProvider
+  product        String // "pro_14d"
+  amountUzs      Int
+  status         PaymentStatus   @default(PENDING)
+  providerTxId   String? // Payme transaction id / Click click_trans_id
+  providerState  Int? // Payme state: 1 created, 2 performed, -1 cancelled, -2 cancelled after perform
+  providerCreate BigInt? // Payme create_time (ms)
+  performedAt    DateTime?
+  cancelledAt    DateTime?
+  cancelReason   Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([provider, providerTxId])
   @@index([userId, createdAt])
 }
