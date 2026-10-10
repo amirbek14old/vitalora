@@ -27,7 +27,7 @@ export default async function CoachPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <PoseCoach
-            aiEnabled={!!user.preference?.aiConsent}
+            aiEnabled={false}
             speechLang={speech[locale]}
             labels={{ ...t.coach, errorGeneric: t.common.errorGeneric, coinsEarned: t.coins.earned, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited }}
           />

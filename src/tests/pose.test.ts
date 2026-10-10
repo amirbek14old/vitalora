@@ -28,7 +28,12 @@ function squatPose(kneeDeg: number, leanDeg = 10): Landmark[] {
   const l = (leanDeg * Math.PI) / 180;
   const S = { x: H.x + 0.25 * Math.sin(l), y: H.y - 0.25 * Math.cos(l) };
   const set = (i: number, p: { x: number; y: number }) => (lm[i] = { ...p, visibility: 0.99 });
-  set(LM.L_SHOULDER, S); set(LM.L_HIP, H); set(LM.L_KNEE, K); set(LM.L_ANKLE, A); set(LM.L_ELBOW, S); set(LM.L_WRIST, S);
+  // Arms swing from hanging down (standing) to straight forward (bottom of the squat) — the classic way
+  // squats could fool a push-up counter.
+  const armA = (((175 - kneeDeg) / 90) * Math.PI) / 2;
+  const E = { x: S.x + 0.12 * Math.sin(armA), y: S.y + 0.12 * Math.cos(armA) };
+  const W = { x: S.x + 0.24 * Math.sin(armA), y: S.y + 0.24 * Math.cos(armA) };
+  set(LM.L_SHOULDER, S); set(LM.L_HIP, H); set(LM.L_KNEE, K); set(LM.L_ANKLE, A); set(LM.L_ELBOW, E); set(LM.L_WRIST, W);
   return lm;
 }
 
@@ -47,7 +52,8 @@ describe("geometry", () => {
     const m = metrics(pushupPose(90), "pushup");
     expect(Math.round(m.elbow)).toBe(90);
     expect(Math.round(m.body)).toBe(180);
-    expect(m.bodyTilt).toBeLessThan(15);
+    expect(m.armHeight).toBeCloseTo(0.5, 2); // shoulder at elbow height = half the arm
+    expect(Math.round(m.bodyLine ?? 0)).toBe(180);
   });
 
   it("reports when the body is not visible", () => {
@@ -98,6 +104,36 @@ describe("squat counter", () => {
   it("flags excessive forward lean", () => {
     const s = run(new RepCounter("squat"), rep(85, 65));
     expect(s.lastRep?.issues).toContain("chestUp");
+  });
+});
+
+describe("push-up camera angles", () => {
+  /** Phone on the floor in front of you: we see shoulders and arms from the front, hips hidden. */
+  function frontPose(armHeight: number): Landmark[] {
+    const lm: Landmark[] = Array.from({ length: 33 }, () => ({ x: 0, y: 0, visibility: 0.05 }));
+    const floor = 0.85, u = 0.15;
+    const set = (i: number, p: { x: number; y: number }) => (lm[i] = { ...p, visibility: 0.95 });
+    for (const [s, e, w, x] of [[LM.L_SHOULDER, LM.L_ELBOW, LM.L_WRIST, 0.35], [LM.R_SHOULDER, LM.R_ELBOW, LM.R_WRIST, 0.65]] as const) {
+      const sy = floor - armHeight * 2 * u;
+      const ey = (sy + floor) / 2;
+      const flare = Math.sqrt(Math.max(0, u * u - (floor - ey) ** 2)); // elbows flare out when bent
+      set(w, { x, y: floor });
+      set(e, { x: x + (x < 0.5 ? -flare : flare), y: ey });
+      set(s, { x, y: sy });
+    }
+    return lm;
+  }
+
+  it("counts push-ups filmed from the front (no hips or feet in view)", () => {
+    const rep = [...sweep(0.97, 0.45, 12), ...sweep(0.45, 0.97, 12)].map(frontPose);
+    const s = run(new RepCounter("pushup"), [...rep, ...rep, ...rep]);
+    expect(s.reps).toBe(3);
+    expect(s.goodReps).toBe(3);
+  });
+
+  it("counts reasonably deep push-ups (elbows ~100°) as reps", () => {
+    const rep = [...sweep(170, 100, 12), ...sweep(100, 170, 12)].map((a) => pushupPose(a));
+    expect(run(new RepCounter("pushup"), rep).reps).toBe(1);
   });
 });
 

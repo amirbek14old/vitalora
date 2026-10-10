@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
 import { Quiz } from "@/components/academy/quiz";
-import { AIRecipe } from "@/components/nutrition/ai-recipe";
 
 export async function generateMetadata() {
   const { t } = await getI18n();
@@ -31,9 +30,9 @@ export default async function NutritionPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title={t.nutrition.title} subtitle={t.nutrition.subtitle} actions={<ButtonLink href="/nutrition/scan" variant="secondary"><Camera className="h-4 w-4" aria-hidden />{t.nutrition.foodScanCta}</ButtonLink>} />
+      <PageHeader title={t.nutrition.title} subtitle={t.nutrition.subtitle} />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardTitle className="flex items-center gap-2"><Utensils className="h-5 w-5 text-brand-700" aria-hidden />{t.nutrition.plateTitle}</CardTitle>
           <PlateDiagram labels={t.nutrition.plate} />
@@ -41,15 +40,6 @@ export default async function NutritionPage() {
         <Card>
           <CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-amber-600" aria-hidden />{t.nutrition.allergyTitle}</CardTitle>
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{t.nutrition.allergyText}</p>
-        </Card>
-        <Card>
-          <CardTitle>{t.nutrition.aiRecipe}</CardTitle>
-          <p className="mb-3 mt-1 text-sm text-slate-600 dark:text-slate-300">{t.nutrition.aiRecipeHint}</p>
-          {user.preference?.aiConsent ? (
-            <AIRecipe labels={{ label: t.nutrition.aiRecipe, placeholder: t.nutrition.aiRecipePlaceholder, ask: t.nutrition.ask, loading: t.assistant.thinking, error: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited, disclaimer: t.common.notMedical, open: t.assistant.history }} />
-          ) : (
-            <p className="text-sm">{t.assistant.consentText} <Link href="/settings" className="underline">{t.assistant.goSettings}</Link></p>
-          )}
         </Card>
       </div>
 

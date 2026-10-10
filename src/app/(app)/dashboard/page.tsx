@@ -13,7 +13,6 @@ import { ButtonLink } from "@/components/ui/button";
 import { WeeklyChart } from "@/components/charts/weekly-chart";
 import { HabitToggle } from "@/components/habit-toggle";
 import { AchievementIcon } from "@/components/achievement-icon";
-import { AIInsight } from "@/components/ai-insight";
 
 export async function generateMetadata() {
   const { t } = await getI18n();
@@ -126,18 +125,6 @@ export default async function DashboardPage() {
           </ul>
         </Card>
 
-        <Card>
-          <CardTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand-600" aria-hidden />{t.dashboard.aiInsight}</CardTitle>
-          <div className="mt-3">
-            {user.preference?.aiConsent ? (
-              <AIInsight labels={{ button: t.dashboard.aiInsightButton, loading: t.assistant.thinking, error: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited, disclaimer: t.common.notMedical }} />
-            ) : (
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                {t.dashboard.aiInsightConsent} <Link href="/settings" className="underline">{t.nav.settings}</Link>
-              </p>
-            )}
-          </div>
-        </Card>
 
         <Card>
           <CardTitle>{t.dashboard.recentAchievements}</CardTitle>

@@ -1,7 +1,7 @@
 import type { Dictionary } from "../types";
 
 const uz: Dictionary = {
-  meta: { title: "VITALORA — Yaxshiroq harakat. Yaxshiroq ovqatlanish. Yaxshiroq hayot.", description: "Bepul, koʻp tilli sogʻlom turmush, sport, ovqatlanish va uyqu taʼlimi — masʼuliyatli sunʼiy intellekt bilan." },
+  meta: { title: "VITALORA — Yaxshiroq harakat. Yaxshiroq ovqatlanish. Yaxshiroq hayot.", description: "Bepul, koʻp tilli sogʻlom turmush, sport, ovqatlanish va uyqu taʼlimi — qurilmadagi AI murabbiy bilan." },
   common: {
     appName: "VITALORA",
     slogan: "Yaxshiroq harakat. Yaxshiroq ovqatlanish. Yaxshiroq hayot.",
@@ -80,7 +80,7 @@ const uz: Dictionary = {
     pillarsTitle: "Hammasi bitta xotirjam joyda",
     pillars: [
       { title: "Harakat", text: "Jihozsiz mashqlar: aniq qadamlar, xavfsiz rivojlanish va muqobil variantlar." },
-      { title: "Ovqatlanish", text: "Muvozanatli ovqatlanish darslari, foydali retseptlar, rasm orqali taom bahosi." },
+      { title: "Ovqatlanish", text: "Muvozanatli ovqatlanish darslari va foydali retseptlar." },
       { title: "Dam olish", text: "Oddiy uyqu kundaligi, uxlashdan oldingi tartib rejalashtiruvchisi va boʻshashish mashqlari." },
       { title: "Oʻrganish", text: "Test va sertifikatli qisqa kurslar — oʻzbek, ingliz va rus tillarida." },
     ],
@@ -91,7 +91,7 @@ const uz: Dictionary = {
       "Tana haqida kamsitish va ommaviy reytinglar yoʻq",
       "Oʻtkazib yuborilgan kunlar uchun jazo yoʻq",
       "Sogʻliq maʼlumotlaringiz maxfiy qoladi",
-      "AI tushuntiradi — hech qachon tashxis qoʻymaydi",
+      "Taʼlim, tashxis emas",
     ],
     finalCta: "Bugun bitta kichik odatni boshlashga tayyormisiz?",
   },
@@ -105,7 +105,6 @@ const uz: Dictionary = {
       "Biz hech qachon tashxis qoʻymaymiz va dori tavsiya qilmaymiz.",
       "Qatʼiy parhezlar, vazn yoʻqotish musobaqalari va kaloriya bellashuvlarini targʻib qilmaymiz.",
       "Oʻsmirlar (13–17 yosh) hisoblarida maxfiylik himoyasi yoqilgan va kaloriya raqamlari koʻrsatilmaydi.",
-      "AI imkoniyatlari ixtiyoriy va faqat sizning aniq roziligingiz bilan ishlaydi.",
     ],
   },
   features: {
@@ -118,10 +117,8 @@ const uz: Dictionary = {
       { title: "Mashqlar kutubxonasi va tartib tuzuvchi", text: "Boshlovchilar uchun mashqlar, qiyinlik darajalari, muqobillar va vaqtingizga mos tartiblar.", status: "available" },
       { title: "Mashgʻulotlar tarixi", text: "Mashgʻulotlarni yozib boring va haftalik daqiqalaringizni koʻring.", status: "available" },
       { title: "Ovqatlanish akademiyasi va retseptlar", text: "Oziq-ovqat guruhlari, suv ichish, allergiya haqida bilim, foydali retseptlar, testlar.", status: "available" },
-      { title: "Ovqat rasmi orqali baholash", text: "Taom rasmini oling — AI porsiya, energiya va oziq-ovqat guruhlarini taxminan baholaydi. Oʻsmirlarga faqat guruhlar koʻrsatiladi.", status: "available" },
       { title: "Uyqu kundaligi va kechki tartib", text: "Qoʻlda yoziladigan qaydlar, haftalik xulosalar va boʻshashish mashqlari.", status: "available" },
       { title: "Odatlar kuzatuvchisi", text: "Moslashuvchan, toʻxtatib qoʻyiladigan odatlar — oʻtkazib yuborilgan kun uchun jazo yoʻq.", status: "available" },
-      { title: "AI yordamchi", text: "Xavfsizlik cheklovlari bilan koʻp tilli taʼlimiy javoblar.", status: "available" },
       { title: "Oʻquv akademiyasi", text: "Kurslar, darslar, testlar va sertifikatlar.", status: "available" },
       { title: "Hamjamiyat", text: "Qiziqish guruhlari, qoʻllab-quvvatlovchi postlar, umumiy oʻquv chaqiriqlari va shikoyat tizimi.", status: "available" },
       { title: "AI kamera murabbiy", text: "Kamerani yoqing: qurilmadagi AI otjimaniya va oʻtirib-turishlarni sanaydi va real vaqtda texnika boʻyicha maslahat beradi. Video telefoningizdan chiqmaydi.", status: "available" },
@@ -472,7 +469,7 @@ const uz: Dictionary = {
       { title: "Har kuni +25 tanga", text: "Kunlik Pro bonusini shu sahifada oling." },
       { title: "Doʻkonda 20% chegirma", text: "Barcha ramka, banner, ism ranglari va nishonlar arzonroq." },
       { title: "Maxsus Pro bezaklar", text: "Aylanuvchi ramkalar, Pro bannerlar, oltin va shafaq rangli ism, Pro nishonlar va Pro rasmlar." },
-      { title: "AI limitlari ikki barobar", text: "AI yordamchiga xabarlar va ovqat rasmi tahlili 2 barobar koʻp." },
+      { title: "AI murabbiy uchun koʻproq mukofot", text: "Kamera bilan mashgʻulotlardan kuniga 50 emas, 100 tangagacha." },
       { title: "PRO belgisi", text: "Profilingizda ismingiz yonida PRO belgisi." },
     ],
     payCta: "Pro — 14 kunga ${usd}",
@@ -502,7 +499,7 @@ const uz: Dictionary = {
     squat: "Oʻtirib-turish",
     sound: "Ovoz",
     loading: "AI modeli va kamera yuklanmoqda…",
-    placement: "Telefonni polga yoki stulga yon tomondan, 2–3 metr narida qoʻying, butun tanangiz koʻrinsin.",
+    placement: "Otjimaniya: telefonni oldingizga yoki yoningizga, 1–2 metr narida polga qoʻying — bosh, yelka va qoʻllar koʻrinsin. Oʻtirib-turish: yon tomondan, 2–3 metr narida, butun tana koʻrinsin.",
     start: "Kamerani yoqish",
     again: "Qaytadan boshlash",
     stop: "Tugatish va saqlash",
@@ -527,11 +524,11 @@ const uz: Dictionary = {
     privacy: "Tana holatini aniqlash toʻliq qurilmangizda ishlaydi. Video hech qachon yuklanmaydi va saqlanmaydi — faqat takrorlar soni va baholar saqlanadi.",
     disclaimer: "Kamera bahosi taxminiy mashgʻulot yordamchisi, tibbiy yoki professional baho emas. Ogʻriq sezsangiz, toʻxtang.",
     feedback: {
-      notVisible: "Butun tanangiz koʻrinadigan qilib turing",
+      notVisible: "Kamera sizni koʻradigan qilib turing (otjimaniya uchun — yelka va qoʻllar)",
       getReady: "Boshlangʻich holatga turing",
       goLower: "Biroz pastroq tushing",
       keepBodyStraight: "Tanangizni toʻgʻri chiziqda ushlang",
-      getIntoPlank: "Otjimaniya holatiga oʻting (planka, kameraga yon tomon bilan)",
+      getIntoPlank: "Otjimaniya holatiga oʻting (planka)",
       standUp: "Toʻgʻri turing, kameraga yon tomon bilan",
       fullExtension: "Yuqorida qoʻllaringizni toʻliq toʻgʻrilang",
       slowDown: "Sekinroq — harakatni nazorat qiling",
@@ -606,8 +603,6 @@ const uz: Dictionary = {
     faq: [
       { q: "VITALORA bepulmi?", a: "Ha. Barcha asosiy imkoniyatlar bepul. Joriy versiyada pullik devor yoʻq." },
       { q: "Aqlli soat kerakmi?", a: "Yoʻq. Hammasi qoʻlda kiritish bilan ishlaydi. Ixtiyoriy integratsiyalar keyinroq qoʻshilishi mumkin." },
-      { q: "Ovqat rasmi baholari qanchalik aniq?", a: "Bu taxminiy baholar. Yashirin yogʻ, souslar va porsiya hajmi haqiqiy qiymatlarga kuchli taʼsir qiladi. Ulardan aniq hisob uchun emas, xabardorlik uchun foydalaning." },
-      { q: "AI tibbiy maslahat bera oladimi?", a: "Yoʻq. Yordamchi faqat umumiy taʼlimiy maʼlumot beradi va kerak boʻlganda mutaxassisga murojaat qilishni tavsiya qiladi." },
       { q: "Maʼlumotlarimni qanday oʻchiraman?", a: "Sozlamalar → Maʼlumotlaringiz boʻlimiga oʻting. Nusxasini yuklab olishingiz va hisobingizni butunlay oʻchirishingiz mumkin." },
       { q: "Nega kaloriyalarni koʻrmayapman?", a: "Oziq-ovqat bilan sogʻlom munosabatni qoʻllab-quvvatlash uchun oʻsmirlar hisoblarida kaloriya oʻrniga oziq-ovqat guruhlari va muvozanat maslahatlari koʻrsatiladi." },
     ],

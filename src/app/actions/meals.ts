@@ -5,7 +5,6 @@ import { assertUser, isTeen } from "@/lib/auth/guards";
 import { saveMealSchema } from "@/lib/validation";
 import { totals } from "@/lib/ai/food";
 import { evaluateAchievements } from "@/lib/achievements";
-import { awardCoins } from "@/lib/coins";
 
 export async function saveMealAction(input: unknown): Promise<{ ok: boolean }> {
   const user = await assertUser();
@@ -24,7 +23,6 @@ export async function saveMealAction(input: unknown): Promise<{ ok: boolean }> {
       balanceNote: parsed.data.balanceNote?.slice(0, 500) || null,
     },
   });
-  await awardCoins(user.id, "meal", `meal:${meal.id}`);
   await evaluateAchievements(user.id, ["first_meal"]);
   revalidatePath("/nutrition/scan");
   return { ok: true };

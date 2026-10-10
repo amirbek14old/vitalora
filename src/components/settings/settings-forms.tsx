@@ -35,8 +35,6 @@ export function PreferencesForm({ prefs, t }: { prefs: Prefs; t: T }) {
       </section>
       <fieldset className="space-y-4">
         <legend className="mb-2 text-base font-semibold">{t.settings.privacy}</legend>
-        <Checkbox id="s-ai" name="aiConsent" defaultChecked={prefs.aiConsent} label={t.settings.aiConsent} hint={t.settings.aiConsentHint} />
-        <Checkbox id="s-aip" name="aiPersonalizationConsent" defaultChecked={prefs.aiPersonalizationConsent} label={t.settings.aiPersonalization} hint={t.settings.aiPersonalizationHint} />
         <Checkbox id="s-an" name="analyticsConsent" defaultChecked={prefs.analyticsConsent} label={t.settings.analytics} />
         <Checkbox id="s-cv" name="communityVisible" defaultChecked={prefs.communityVisible} label={t.settings.communityVisible} />
       </fieldset>

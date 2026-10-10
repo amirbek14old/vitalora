@@ -46,9 +46,9 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
 
   it("can't bypass daily caps by spam-clicking (concurrent requests)", async () => {
     const before = await balance();
-    const got = await Promise.all(Array.from({ length: 15 }, (_, i) => awardCoins(userId, "meal", `meal:spam${i}`)));
-    expect(got.filter((n) => n > 0)).toHaveLength(2); // meal cap = 2/day
-    expect((await balance()) - before).toBe(6);
+    const got = await Promise.all(Array.from({ length: 15 }, (_, i) => awardCoins(userId, "sleep", `sleep:spam${i}`)));
+    expect(got.filter((n) => n > 0)).toHaveLength(1); // sleep cap = 1/day
+    expect((await balance()) - before).toBe(5);
   });
 
   it("limits camera-coach coins per day", async () => {
@@ -58,13 +58,13 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
   });
 
   it("buys items atomically and refuses when coins are insufficient", async () => {
-    const before = await balance(); // 2 + 5 + 6 + 50 = 63
-    expect(before).toBe(63);
+    const before = await balance(); // 2 + 5 + 5 + 50 = 62
+    expect(before).toBe(62);
     expect(await purchaseItem(userId, "frame_teal")).toEqual({ ok: true, price: 60 });
-    expect(await balance()).toBe(3);
+    expect(await balance()).toBe(2);
     expect(await purchaseItem(userId, "frame_teal")).toEqual({ ok: false, error: "owned" });
     expect(await purchaseItem(userId, "pro_pass_3d")).toEqual({ ok: false, error: "insufficient" });
-    expect(await balance()).toBe(3);
+    expect(await balance()).toBe(2);
   });
 
   it("requires Pro for Pro-only items; 500 coins give 3 days of Pro; Pro gets 20% off", async () => {

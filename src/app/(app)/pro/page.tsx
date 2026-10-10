@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, Coins, Crown, Gift, Percent, Sparkles, Bot, Palette } from "lucide-react";
+import { BadgeCheck, Coins, Crown, Gift, Percent, Sparkles, Video, Palette } from "lucide-react";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/guards";
 import { getI18n } from "@/lib/i18n/server";
@@ -17,7 +17,7 @@ export async function generateMetadata() {
   return { title: t.pro.title };
 }
 
-const PERK_ICONS = [Coins, Gift, Percent, Palette, Bot, BadgeCheck];
+const PERK_ICONS = [Coins, Gift, Percent, Palette, Video, BadgeCheck];
 
 export default async function ProPage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
   const user = await requireUser();
