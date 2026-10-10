@@ -66,7 +66,7 @@ export default async function AssistantPage({ searchParams }: { searchParams: Pr
               key={active?.id ?? "new"}
               conversationId={active?.id}
               initialMessages={(active?.messages ?? []).map((m) => ({ id: m.id, role: m.role === "assistant" ? "assistant" : "user", content: m.content, flagged: m.flagged }))}
-              labels={{ label: t.assistant.title, placeholder: t.assistant.placeholder, send: t.assistant.send, thinking: t.assistant.thinking, error: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited, suggestions: t.assistant.suggestions }}
+              labels={{ label: t.assistant.title, placeholder: t.assistant.placeholder, send: t.assistant.send, thinking: t.assistant.thinking, error: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited, aiErrors: t.assistant.aiErrors, suggestions: t.assistant.suggestions }}
             />
           </Card>
         </div>

@@ -32,7 +32,7 @@ export default async function FoodScanPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           {user.preference?.aiConsent ? (
-            <FoodScanner teen={teen} labels={{ ...t.foodScan, groupLabels, errorGeneric: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited }} />
+            <FoodScanner teen={teen} labels={{ ...t.foodScan, groupLabels, errorGeneric: t.common.errorGeneric, notConfigured: t.assistant.notConfigured, rateLimited: t.assistant.rateLimited, aiErrors: t.assistant.aiErrors }} />
           ) : (
             <Alert tone="info">
               {t.foodScan.consentNeeded} <Link href="/settings" className="font-medium underline">{t.assistant.goSettings}</Link>

@@ -8,6 +8,8 @@ export type CompletionRequest = {
   /** Attach an image to the last user message (vision models only). */
   image?: ImageInput;
   vision?: boolean;
+  /** Ask for a JSON object (JSON mode where the provider supports it). */
+  json?: boolean;
 };
 
 export interface AIProvider {

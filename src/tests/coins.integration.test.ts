@@ -93,7 +93,7 @@ describe.skipIf(!hasDb)("coin economy (database)", async () => {
   it("never lets the balance go negative under concurrent purchases", async () => {
     await db.user.update({ where: { id: userId }, data: { coins: 300, proUntil: null } });
     await db.userItem.deleteMany({ where: { userId, item: { code: "frame_teal" } } });
-    await db.shopItem.upsert({ where: { code: "frame_mint" }, update: {}, create: { code: "frame_mint", kind: "FRAME", name: { en: "Mint" }, price: 200, style: "mint" } });
+    await db.shopItem.upsert({ where: { code: "frame_mint" }, update: { price: 200, proOnly: false, active: true }, create: { code: "frame_mint", kind: "FRAME", name: { en: "Mint" }, price: 200, style: "mint" } });
     // 300 coins, two 200-coin purchases at once → exactly one succeeds
     await db.shopItem.update({ where: { code: "frame_teal" }, data: { price: 200 } });
     const results = await Promise.all([purchaseItem(userId, "frame_teal"), purchaseItem(userId, "frame_mint")]);

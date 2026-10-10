@@ -9,7 +9,6 @@ export const REWARDS = {
   sleep: { amount: 5, maxPerDay: 1 },
   habit: { amount: 2, maxPerDay: 10 },
   lesson: { amount: 15 },
-  quiz_perfect: { amount: 10, maxPerDay: 5 },
   meal: { amount: 3, maxPerDay: 2 },
   achievement: { amount: 20 },
   // Pro perk: claim once a day on /pro (not doubled).

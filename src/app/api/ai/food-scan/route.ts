@@ -4,7 +4,7 @@ import { isTeen } from "@/lib/auth/guards";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
 import { isSameOrigin } from "@/lib/request";
 import { getAIProvider } from "@/lib/ai/provider";
-import { AINotConfiguredError } from "@/lib/ai/types";
+import { AINotConfiguredError, AIProviderError } from "@/lib/ai/types";
 import { buildFoodVisionPrompt } from "@/lib/ai/prompts";
 import { MAX_IMAGE_BYTES, parseFoodAnalysis, sniffImageType, stripNumbers } from "@/lib/ai/food";
 import { logError } from "@/lib/audit";
@@ -13,6 +13,7 @@ import { isPro } from "@/lib/coins";
 import { PRO_LIMIT_MULTIPLIER } from "@/lib/coin-rules";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // vision models can take a while
 
 /**
  * Food photo → estimated foods, portions, energy and macros.
@@ -50,7 +51,8 @@ export async function POST(req: Request) {
       system: buildFoodVisionPrompt(locale),
       messages: [{ role: "user", content: "Analyse this meal photo and return the JSON object." }],
       image: { mediaType, base64: Buffer.from(bytes).toString("base64") },
-      maxTokens: 900,
+      maxTokens: 2000,
+      json: true,
     });
     const analysis = parseFoodAnalysis(raw);
     if (!analysis.isFood || analysis.items.length === 0) return NextResponse.json({ error: "not_food" }, { status: 422 });
@@ -58,6 +60,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ analysis: isTeen(user) ? stripNumbers(analysis) : analysis, teen: isTeen(user) });
   } catch (err) {
     await logError("ai.food_scan", err);
-    return NextResponse.json({ error: "provider_error" }, { status: 502 });
+    console.error("[ai] food scan failed:", err instanceof Error ? err.message : err);
+    const status = err instanceof AIProviderError ? err.status ?? 0 : 0;
+    return NextResponse.json({ error: "provider_error", status }, { status: 502 });
   }
 }

@@ -367,6 +367,7 @@ const en = {
     goSettings: "Open Settings",
     notConfigured: "The AI assistant isn't configured on this server yet (missing AI provider settings).",
     rateLimited: "You've reached the hourly message limit. Please try again later.",
+    aiErrors: { quota: "The AI service is busy or its free limit is used up. Try again in a minute.", key: "The AI key on the server is invalid. Check AI_API_KEY in Vercel.", model: "The AI model name is wrong or unavailable. Check AI_MODEL in Vercel.", other: "The AI service returned an error (code {code}). Please try again." },
     suggestions: ["How do I warm up before exercise?", "What is a balanced plate?", "Tips for a calmer bedtime routine", "What does 'reps' and 'sets' mean?"],
     deleteChat: "Delete conversation",
   },

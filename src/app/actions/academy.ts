@@ -40,7 +40,6 @@ export async function submitQuizAction(input: { lessonId: string; answers: numbe
   const correct = questions.map((q) => q.correctIndex);
   const score = questions.reduce((acc, q, i) => acc + (parsed.data.answers[i] === q.correctIndex ? 1 : 0), 0);
   await db.quizAttempt.create({ data: { userId: user.id, lessonId: parsed.data.lessonId, score, total: questions.length } });
-  if (score === questions.length) await awardCoins(user.id, "quiz_perfect", `quiz:${parsed.data.lessonId}`);
   await evaluateAchievements(user.id, ["quiz_perfect"]);
   const locale = await getLocale();
   return { score, total: questions.length, correct, explanations: questions.map((q) => tr(q.explanation, locale)) };

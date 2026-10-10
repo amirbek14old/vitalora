@@ -52,7 +52,6 @@ Kamera orqali mashqlar texnikasini tekshiradi.
 | Uyqu qaydi | +5 | kuniga 1 ta |
 | Odat belgisi | +2 | kuniga 10 ta |
 | Dars | +15 | — |
-| Aʼlo test | +10 | — |
 | Ovqat kundaligi | +3 | kuniga 2 ta |
 | Yutuq | +20 | — |
 | AI murabbiy | har toʻgʻri takror uchun +1 | setda 25, kuniga 50 |

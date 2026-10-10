@@ -6,7 +6,7 @@ import { chatSchema } from "@/lib/validation";
 import { rateLimit, LIMITS } from "@/lib/rate-limit";
 import { isSameOrigin } from "@/lib/request";
 import { getAIProvider } from "@/lib/ai/provider";
-import { AINotConfiguredError } from "@/lib/ai/types";
+import { AINotConfiguredError, AIProviderError } from "@/lib/ai/types";
 import { buildSystemPrompt } from "@/lib/ai/prompts";
 import { classifyInput, guardOutput, isBlockingCategory, safeResponse } from "@/lib/ai/safety";
 import { getWeeklyStats, summariseForAI } from "@/lib/stats";
@@ -16,6 +16,7 @@ import { isPro } from "@/lib/coins";
 import { PRO_LIMIT_MULTIPLIER } from "@/lib/coin-rules";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 const HISTORY_LIMIT = 12;
 
 export async function POST(req: Request) {
@@ -94,6 +95,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ conversationId, reply, flagged });
   } catch (err) {
     await logError("ai.chat", err);
-    return NextResponse.json({ error: "provider_error", conversationId }, { status: 502 });
+    console.error("[ai] chat failed:", err instanceof Error ? err.message : err);
+    const status = err instanceof AIProviderError ? err.status ?? 0 : 0;
+    return NextResponse.json({ error: "provider_error", status, conversationId }, { status: 502 });
   }
 }

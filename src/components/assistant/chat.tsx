@@ -1,4 +1,5 @@
 "use client";
+import { aiErrorText, type AIErrorLabels } from "@/lib/ai-error-text";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bot, Send, User } from "lucide-react";
@@ -9,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export type ChatMessageView = { id: string; role: "user" | "assistant"; content: string; flagged?: string | null };
 
-type Labels = { placeholder: string; send: string; thinking: string; error: string; notConfigured: string; rateLimited: string; suggestions: string[]; label: string };
+type Labels = AIErrorLabels & { placeholder: string; send: string; thinking: string; suggestions: string[]; label: string };
 
 export function Chat({ conversationId: initialId, initialMessages, labels }: { conversationId?: string; initialMessages: ChatMessageView[]; labels: Labels }) {
   const router = useRouter();
@@ -39,7 +40,7 @@ export function Chat({ conversationId: initialId, initialMessages, labels }: { c
       // Keep the conversation id in state (no navigation → no remount, so typed text is never lost).
       if (data.conversationId && !conversationId) setConversationId(data.conversationId);
       if (!res.ok) {
-        setError(data.error === "not_configured" ? labels.notConfigured : data.error === "rate_limited" ? labels.rateLimited : labels.error);
+        setError(aiErrorText(data, labels));
         return;
       }
       setMessages((m) => [...m, { id: `a-${Date.now()}`, role: "assistant", content: data.reply, flagged: data.flagged }]);

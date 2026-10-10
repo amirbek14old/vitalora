@@ -15,10 +15,12 @@ describe("parseFoodAnalysis", () => {
     expect(a.items[0].portionGrams).toBe(300);
   });
 
-  it("rejects invalid structures", () => {
+  it("rejects output without JSON and normalises incomplete items", () => {
     expect(() => parseFoodAnalysis("no json here")).toThrow();
-    expect(() => parseFoodAnalysis('{"isFood": true, "items": [{"name": "x"}]}')).toThrow();
-    expect(() => parseFoodAnalysis('{"isFood": true, "items": [{"name":"x","portionGrams":10,"foodGroup":"poison"}]}')).toThrow();
+    const a = parseFoodAnalysis('{"isFood": true, "items": [{"name": "x"}, {"name":"y","portionGrams":10,"foodGroup":"poison"}, {"portionGrams": 5}]}');
+    expect(a.items).toHaveLength(2); // nameless item dropped
+    expect(a.items[0]).toMatchObject({ portionGrams: 100, foodGroup: "mixed", kcal: null });
+    expect(a.items[1].foodGroup).toBe("mixed");
   });
 });
 

@@ -25,24 +25,39 @@ export class OpenAICompatibleProvider implements AIProvider {
     });
 
     const base = (this.cfg.baseUrl ?? "https://api.openai.com/v1").replace(/\/+$/, "");
-    const res = await fetch(`${base}/chat/completions`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${this.cfg.apiKey}` },
-      body: JSON.stringify({
-        model: req.vision || req.image ? this.cfg.visionModel : this.cfg.model,
-        max_tokens: req.maxTokens ?? 800,
-        messages,
-        ...(this.cfg.reasoningEffort ? { reasoning_effort: this.cfg.reasoningEffort } : {}),
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
+    const body: Record<string, unknown> = {
+      model: req.vision || req.image ? this.cfg.visionModel : this.cfg.model,
+      max_tokens: req.maxTokens ?? 800,
+      messages,
+    };
+    const extras: Record<string, unknown> = {
+      ...(this.cfg.reasoningEffort ? { reasoning_effort: this.cfg.reasoningEffort } : {}),
+      ...(req.json ? { response_format: { type: "json_object" } } : {}),
+    };
+    const send = (b: Record<string, unknown>) =>
+      fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${this.cfg.apiKey}` },
+        body: JSON.stringify(b),
+        signal: AbortSignal.timeout(55_000),
+      });
+
+    let res = await send({ ...body, ...extras });
+    // Some models reject optional parameters (reasoning_effort / JSON mode) — retry once without them.
+    if (res.status === 400 && Object.keys(extras).length) {
+      const detail = (await res.text().catch(() => "")).slice(0, 300);
+      console.error(`[ai] 400 with optional params, retrying without them: ${detail}`);
+      res = await send(body);
+    }
     if (!res.ok) {
       // Log the provider's reason (never the key) so problems are visible in Vercel → Logs.
       const detail = (await res.text().catch(() => "")).slice(0, 300);
       console.error(`[ai] ${this.cfg.baseUrl ?? "openai"} → ${res.status}: ${detail}`);
       throw new AIProviderError(`OpenAI-compatible API error ${res.status}`, res.status);
     }
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    return data.choices?.[0]?.message?.content?.trim() ?? "";
+    const data = (await res.json()) as { choices?: { message?: { content?: string | null }; finish_reason?: string }[] };
+    const text = data.choices?.[0]?.message?.content?.trim() ?? "";
+    if (!text) console.error(`[ai] empty answer (finish_reason: ${data.choices?.[0]?.finish_reason ?? "?"})`);
+    return text;
   }
 }

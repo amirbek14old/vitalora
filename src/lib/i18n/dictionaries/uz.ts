@@ -369,6 +369,7 @@ const uz: Dictionary = {
     goSettings: "Sozlamalarni ochish",
     notConfigured: "Bu serverda AI yordamchi hali sozlanmagan (AI provayder sozlamalari yoʻq).",
     rateLimited: "Soatlik xabar chegarasiga yetdingiz. Keyinroq qayta urinib koʻring.",
+    aiErrors: { quota: "AI xizmati band yoki bepul limit tugadi. Bir daqiqadan soʻng urinib koʻring.", key: "Serverdagi AI kaliti notoʻgʻri. Vercel’da AI_API_KEY ni tekshiring.", model: "AI modeli notoʻgʻri yoki mavjud emas. Vercel’da AI_MODEL ni tekshiring.", other: "AI xizmati xato qaytardi (kod {code}). Qayta urinib koʻring." },
     suggestions: ["Mashqdan oldin qanday qizdirilish kerak?", "Muvozanatli likopcha nima?", "Xotirjam uxlash tartibi uchun maslahatlar", "\"Takror\" va \"set\" nimani anglatadi?"],
     deleteChat: "Suhbatni oʻchirish",
   },

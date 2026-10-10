@@ -1,4 +1,5 @@
 "use client";
+import { aiErrorText, type AIErrorLabels } from "@/lib/ai-error-text";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Loader2, Save } from "lucide-react";
@@ -9,7 +10,7 @@ import { saveMealAction } from "@/app/actions/meals";
 import { scaleItem, totals, type FoodAnalysis, type FoodItem } from "@/lib/ai/food";
 import type { Dictionary } from "@/lib/i18n/types";
 
-type Labels = Dictionary["foodScan"] & { groupLabels: Record<string, string>; errorGeneric: string; notConfigured: string; rateLimited: string };
+type Labels = Dictionary["foodScan"] & { groupLabels: Record<string, string>; errorGeneric: string; notConfigured: string; rateLimited: string; aiErrors: AIErrorLabels["aiErrors"] };
 
 /** Downscale on the device before upload: smaller request and EXIF metadata (incl. GPS) is removed. */
 async function downscale(file: File, maxSide = 1280): Promise<Blob> {
@@ -67,12 +68,9 @@ export function FoodScanner({ labels, teen }: { labels: Labels; teen: boolean })
       const res = await fetch("/api/ai/food-scan", { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const map: Record<string, string> = {
-          not_food: labels.notFood, too_large: labels.tooLarge, bad_type: labels.badType,
-          not_configured: labels.notConfigured, rate_limited: labels.rateLimited, consent_required: labels.consentNeeded,
-        };
+        const extra: Record<string, string> = { not_food: labels.notFood, too_large: labels.tooLarge, bad_type: labels.badType, consent_required: labels.consentNeeded };
         setStatus("error");
-        setError(map[data.error] ?? labels.errorGeneric);
+        setError(aiErrorText(data, { error: labels.errorGeneric, notConfigured: labels.notConfigured, rateLimited: labels.rateLimited, aiErrors: labels.aiErrors }, extra));
         return;
       }
       const analysis = data.analysis as FoodAnalysis;
